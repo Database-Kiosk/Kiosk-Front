@@ -1,0 +1,30 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 64px 16px;
+  text-align: center;
+}
+
+.page h1 {
+  margin: 0 0 16px;
+  font-size: 2.5rem;
+}
+
+.route-list {
+  display: inline-block;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  line-height: 2;
+}
+
+.table-number {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.muted {
+  color: #666;
+  font-size: 0.9rem;
+}
