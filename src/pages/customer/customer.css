@@ -103,6 +103,21 @@
   line-height: 1.6;
 }
 
+.order-error__text {
+  margin: 0;
+}
+
+.order-error__retry {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.order-loading {
+  margin: var(--space-6) 0;
+  color: var(--color-muted);
+  text-align: center;
+}
+
 /* Buttons */
 .order-actions {
   display: flex;
