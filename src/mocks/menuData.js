@@ -1,8 +1,10 @@
-// TEMPORARY mock data for issue #2 (UI only, no backend).
-// Field names mirror the DB columns (category, menu, menu_option) so this can be
-// replaced by the menu API in src/api/ later without changing the UI components.
-// Assumed API shape: each menu includes its options as `options`.
-// is_active: 1 = 판매 중, 0 = 판매 중지. image_url may be null (placeholder is shown).
+// TEMPORARY mock data (issues #2, #4). The backend has no category/menu API yet.
+// Use ONLY through src/api/menuApi.js; pages must not import this file directly.
+// Delete it once menuApi.js calls the real API.
+// Field names mirror the DB columns (category, menu, menu_option).
+// `options` inside each menu is a mock-only choice; the real API shape is not decided yet.
+// is_active: 1 = 판매 중, 0 = 판매 중지 (hidden on the customer page). image_url may be null (placeholder is shown).
+// Includes inactive menus (된장찌개, 식혜) to test that they are hidden.
 
 export const categories = [
   { category_id: 1, category_name: '메인' },
