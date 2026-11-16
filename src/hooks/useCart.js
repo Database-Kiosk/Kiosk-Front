@@ -94,7 +94,7 @@ export function getLineTotal(item) {
 }
 
 /**
- * Builds a cart item from a menu (mock/API shape) and the selected option ids.
+ * Builds a cart item from a menu (GET /api/menus shape) and the selected option ids.
  * Option data is taken from menu.options, so unknown or duplicate ids are ignored.
  * Returns null if the menu is inactive (is_active !== 1) or the input is invalid.
  */

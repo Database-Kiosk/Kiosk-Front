@@ -36,6 +36,8 @@ function MenuDetailSheet({ menu, onAdd, onClose }) {
   const [selectedOptionIds, setSelectedOptionIds] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState('');
+  // Image load failed → show the placeholder. Reset per menu by the key={menu.menu_id} remount.
+  const [imageFailed, setImageFailed] = useState(false);
   const sheetRef = useRef(null);
   const titleId = useId();
 
@@ -156,8 +158,8 @@ function MenuDetailSheet({ menu, onAdd, onClose }) {
 
         <div className="sheet__scroll">
           <div className="sheet__image">
-            {menu.image_url ? (
-              <img src={menu.image_url} alt="" />
+            {menu.image_url && !imageFailed ? (
+              <img src={menu.image_url} alt="" onError={() => setImageFailed(true)} />
             ) : (
               <span className="sheet__placeholder" aria-hidden="true">
                 {menu.menu_name.charAt(0)}
