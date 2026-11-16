@@ -4,7 +4,7 @@ import CategoryTabs from '../../components/customer/CategoryTabs.jsx';
 import MenuCard from '../../components/customer/MenuCard.jsx';
 import MenuDetailSheet from '../../components/customer/MenuDetailSheet.jsx';
 import BottomActionBar from '../../components/customer/BottomActionBar.jsx';
-// Categories/menus come through src/api/menuApi.js (TEMPORARY: mock data until the backend API exists).
+// Categories/menus come from the backend through src/api/menuApi.js.
 import { useMenus } from '../../hooks/useMenus.js';
 
 // Customer menu list page. Entry URL: /order?table={tableId}
@@ -17,7 +17,8 @@ function OrderPage() {
   const [selectedMenu, setSelectedMenu] = useState(null); // menu shown in the detail sheet
 
   // Customers see only menus on sale (is_active is normalized to 1/0 in menuApi.js).
-  // Categories with no active menus keep their tab and show the empty message.
+  // The server already returns only menus on sale and only categories that have one; this filter
+  // and the empty message below are kept as a safety net (e.g. data changed between the two requests).
   const activeMenus = menus.filter((menu) => menu.is_active === 1);
   const visibleMenus =
     selectedCategoryId === null
