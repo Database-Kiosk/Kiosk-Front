@@ -4,6 +4,7 @@ import OrderLayout from './pages/customer/OrderLayout.jsx';
 import OrderPage from './pages/customer/OrderPage.jsx';
 import CartPage from './pages/customer/CartPage.jsx';
 import OrderConfirmPage from './pages/customer/OrderConfirmPage.jsx';
+import PaymentPage from './pages/customer/PaymentPage.jsx';
 import OrderCompletePage from './pages/customer/OrderCompletePage.jsx';
 import AdminLoginPage from './pages/admin/AdminLoginPage.jsx';
 import OrderHistoryPage from './pages/customer/OrderHistoryPage.jsx';
@@ -20,6 +21,7 @@ function App() {
         <Route index element={<OrderPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="confirm" element={<OrderConfirmPage />} />
+        <Route path="payment" element={<PaymentPage />} />
         <Route path="complete" element={<OrderCompletePage />} />
         <Route path="history" element={<OrderHistoryPage />} />
       </Route>

@@ -1,61 +1,36 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom';
 import CartItem from '../../components/customer/CartItem.jsx';
 import BottomActionBar from '../../components/customer/BottomActionBar.jsx';
+import PendingOrderNotice from '../../components/customer/PendingOrderNotice.jsx';
+import { MAX_ORDER_LINES } from '../../api/orderApi.js';
+import { usePendingOrder } from '../../hooks/usePendingOrder.js';
 import { formatPrice } from '../../utils/format.js';
 
-// Order request snapshot at confirm time, shaped for the future order API
-// (orders / orderdetail / orderoption). Prices are not sent: the server must compute them.
-function buildOrderRequest(tableId, items) {
-  return {
-    table_id: tableId,
-    items: items.map((item) => ({
-      menu_id: item.menu_id,
-      option_ids: item.options.map((option) => option.option_id),
-      quantity: item.quantity,
-    })),
-  };
-}
-
 // Customer order confirm page. Entry URL: /order/confirm?table={tableId}
-// Read-only review of the cart; editing happens on the cart page.
+// Read-only review of the cart (menus, options, quantities, total); editing happens on the cart page.
+// "결제하기" opens the mock payment page, which creates the order.
 function OrderConfirmPage() {
   const { tableId, toPath, cart } = useOutletContext();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  // Ref blocks double clicks synchronously (state updates are not visible until the next render).
-  const submittingRef = useRef(false);
+  const pendingOrder = usePendingOrder(tableId);
+  // A double click must open the payment page once (one history entry).
+  const navigatingRef = useRef(false);
+  // The server accepts at most MAX_ORDER_LINES lines per order.
+  const extraLines = cart.items.length - MAX_ORDER_LINES;
+  const isOverLimit = extraLines > 0;
+  // A previous order request is running or its result is unknown: no new payment.
+  const isBlocked = pendingOrder.status !== 'none';
 
-  function handleConfirm() {
-    if (submittingRef.current) return;
-
-    // 1–2. Re-check the cart and take a snapshot of what is being ordered right now.
-    const orderRequest = buildOrderRequest(tableId, cart.items);
-    if (orderRequest.items.length === 0) return;
-
-    submittingRef.current = true;
-    setIsSubmitting(true);
-
-    // TEMPORARY (issue #2 mock): nothing is sent to a server and nothing is saved.
-    // When the order API exists (src/api/), replace this block with:
-    //   try { await createOrder(orderRequest); }
-    //   catch { show an error, reset submittingRef / isSubmitting, keep the cart; return; }
-    // and clear the cart + navigate ONLY after the success response.
-
-    // 3–5. Clear this table's cart and show the (mock) complete page.
-    // replace: Back must not return to this confirm page. The state marks this navigation
-    // as coming from the confirm flow; the complete page redirects to the menu without it.
-    cart.clearCart();
-    navigate(toPath('/order/complete'), {
-      replace: true,
-      state: { fromOrderConfirm: true, tableId },
-    });
+  function goToPayment() {
+    if (navigatingRef.current || isOverLimit || isBlocked) return;
+    navigatingRef.current = true;
+    navigate(toPath('/order/payment'), { state: { fromConfirm: true } });
   }
 
   // Empty cart (e.g. typed URL): nothing to confirm. The cart is restored synchronously from
   // sessionStorage on the first render, so this never fires before the saved cart is loaded.
-  // Skipped while submitting, because clearCart() empties the cart just before navigating away.
-  if (cart.items.length === 0 && !isSubmitting) {
+  if (cart.items.length === 0) {
     return <Navigate to={toPath('/order')} replace />;
   }
 
@@ -93,7 +68,21 @@ function OrderConfirmPage() {
         </div>
       </dl>
 
-      <BottomActionBar label="주문 확정하기" onClick={handleConfirm} disabled={isSubmitting} narrow />
+      {isOverLimit && (
+        <p className="order-confirm__limit" role="alert">
+          한 번에 주문할 수 있는 항목은 최대 {MAX_ORDER_LINES}개입니다. 장바구니에서 항목 {extraLines}개를
+          삭제한 뒤 결제해 주세요.
+        </p>
+      )}
+
+      <PendingOrderNotice status={pendingOrder.status} onAcknowledge={pendingOrder.acknowledge} />
+
+      <BottomActionBar
+        label={`${formatPrice(cart.totalPrice)} 결제하기`}
+        onClick={goToPayment}
+        disabled={isOverLimit || isBlocked}
+        narrow
+      />
     </section>
   );
 }
