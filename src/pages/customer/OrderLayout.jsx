@@ -5,7 +5,8 @@ import { useTable } from '../../hooks/useTable.js';
 import './customer.css';
 import './OrderHistoryPage.css';
 
-// Shared layout for customer routes: /order, /order/cart, /order/confirm, /order/complete
+// Shared layout for customer routes: /order, /order/cart, /order/confirm, /order/payment,
+// /order/complete, /order/history
 // Validates ?table=N (format, then existence on the server) and passes it, plus the table's cart,
 // to child pages via Outlet context. Child pages render only after the table is confirmed.
 function OrderLayout() {

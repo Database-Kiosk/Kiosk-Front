@@ -1,0 +1,39 @@
+/* Previous-order notice (confirm / payment pages). Shared tokens: index.css, buttons: customer.css. */
+
+.pending-order {
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  line-height: 1.5;
+}
+
+.pending-order--uncertain {
+  border: 1px solid var(--color-primary);
+}
+
+.pending-order__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.pending-order__confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.pending-order__confirm input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.pending-order__button {
+  width: 100%;
+  margin-top: var(--space-3);
+}
