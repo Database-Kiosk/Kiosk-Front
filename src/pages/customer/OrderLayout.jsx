@@ -1,8 +1,9 @@
 import { useLayoutEffect } from 'react';
-import { Outlet, useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigationType, useSearchParams } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart.js';
 import { useTable } from '../../hooks/useTable.js';
 import './customer.css';
+import './OrderHistoryPage.css';
 
 // Shared layout for customer routes: /order, /order/cart, /order/confirm, /order/complete
 // Validates ?table=N (format, then existence on the server) and passes it, plus the table's cart,
@@ -38,7 +39,20 @@ function OrderLayout() {
       <header className="order-header">
         <div className="order-header__inner">
           <span className="order-header__title">주문하기</span>
-          {isTableFound && <span className="order-header__table">테이블 {tableId}번</span>}
+          {isTableFound && (
+            <div className="history-header-actions">
+              <span className="order-header__table">
+                테이블 {tableId}번
+              </span>
+
+              <Link
+                className="history-header-link"
+                to={toPath('/order/history')}
+              >
+                주문 내역
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 

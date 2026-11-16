@@ -6,6 +6,7 @@ import CartPage from './pages/customer/CartPage.jsx';
 import OrderConfirmPage from './pages/customer/OrderConfirmPage.jsx';
 import OrderCompletePage from './pages/customer/OrderCompletePage.jsx';
 import AdminLoginPage from './pages/admin/AdminLoginPage.jsx';
+import OrderHistoryPage from './pages/customer/OrderHistoryPage.jsx';
 import './App.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="cart" element={<CartPage />} />
         <Route path="confirm" element={<OrderConfirmPage />} />
         <Route path="complete" element={<OrderCompletePage />} />
+        <Route path="history" element={<OrderHistoryPage />} />
       </Route>
 
       {/* Admin */}
