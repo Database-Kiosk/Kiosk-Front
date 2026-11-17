@@ -1,0 +1,40 @@
+/* Admin segmented filter (AdminTabs) */
+.admin-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius);
+  background: #e7e9ed;
+}
+
+.admin-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #4b5059;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-tabs__tab.is-active {
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-tabs__count {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 0.75rem;
+  text-align: center;
+}

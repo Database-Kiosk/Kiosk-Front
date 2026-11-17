@@ -1,0 +1,173 @@
+/* Admin order board (AdminOrdersPage + AdminOrderCard) */
+
+.admin-orders__tabs {
+  display: none;
+  margin-bottom: var(--space-4);
+}
+
+.admin-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.admin-kanban__column {
+  min-height: 200px;
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: #e9ebef;
+}
+
+.admin-kanban__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-1) var(--space-1) 0;
+  font-size: var(--font-size-base);
+}
+
+.admin-kanban__count {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.admin-kanban__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-kanban__empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/* Order card */
+.admin-order-card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-order-card.is-done {
+  opacity: 0.8;
+}
+
+.admin-order-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-order-card__table {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.admin-order-card__id {
+  margin: 2px 0 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.admin-order-card__time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order-card__elapsed {
+  color: var(--color-primary-pressed);
+  font-size: 0.8125rem;
+}
+
+.admin-order-card__items {
+  margin: 0;
+  padding: var(--space-3) 0;
+  list-style: none;
+}
+
+.admin-order-card__item + .admin-order-card__item {
+  margin-top: var(--space-2);
+}
+
+.admin-order-card__item-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-weight: 600;
+}
+
+.admin-order-card__quantity {
+  flex: none;
+  color: var(--color-primary-pressed);
+}
+
+.admin-order-card__options {
+  margin: 2px 0 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.admin-order-card__foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-order-card__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-order-card__total {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order-card__action {
+  width: 100%;
+  min-height: var(--touch-min);
+}
+
+/* Tablet and below: status tabs; only the selected column is shown */
+@media (max-width: 1023px) {
+  .admin-orders__tabs {
+    display: inline-flex;
+  }
+
+  .admin-kanban {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-kanban__column:not(.is-visible) {
+    display: none;
+  }
+
+  .admin-kanban__column {
+    min-height: 0;
+  }
+
+  .admin-kanban__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
