@@ -38,11 +38,23 @@ export async function adminRequest(path, { method = 'GET', body, signal } = {}) 
   // stops reading the body), and are removed in `finally`.
   try {
     if (signal?.aborted) controller.abort();
+    const isFormData = body instanceof FormData;
+
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       credentials: 'include',
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
+
+      headers:
+        body && !isFormData
+          ? { 'Content-Type': 'application/json' }
+          : undefined,
+
+      body: isFormData
+        ? body
+        : body
+          ? JSON.stringify(body)
+          : undefined,
+
       signal: controller.signal,
     });
 

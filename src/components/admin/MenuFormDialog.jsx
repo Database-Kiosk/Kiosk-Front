@@ -39,6 +39,9 @@ function MenuFormDialog({ menu, categories, onClose, onSave }) {
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageError, setImageError] = useState('');
   const isEdit = Boolean(menu);
   // Stable React keys for options added in this dialog (they have no option_id yet).
   const nextOptionKey = useRef(0);
@@ -70,21 +73,37 @@ function MenuFormDialog({ menu, categories, onClose, onSave }) {
     setIsSaving(true);
     setSaveError('');
     try {
-      await onSave({
-        menu_id: menu?.menu_id,
-        menu_name: draft.menu_name.trim(),
-        category_id: Number(draft.category_id),
-        price: Number(draft.price),
-        description: draft.description.trim() || null,
-        is_active: draft.is_active ? 1 : 0,
-        options: draft.options.map((option) => ({
-          option_id: option.option_id,
-          option_name: option.option_name.trim(),
-          additional_price: Number(option.additional_price),
-        })),
-      });
-    } catch {
-      setSaveError('메뉴를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      await onSave(
+        {
+          menu_id: menu?.menu_id,
+          menu_name: draft.menu_name.trim(),
+          category_id: Number(draft.category_id),
+          price: Number(draft.price),
+          description: draft.description.trim() || null,
+          is_active: draft.is_active ? 1 : 0,
+
+          options: draft.options.map((option) => ({
+            option_id: option.option_id,
+            option_name: option.option_name.trim(),
+            additional_price: Number(option.additional_price),
+          })),
+        },
+        imageFile,
+      );
+    } catch (error) {
+      let message = '메뉴를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+
+      if (error.status === 401) {
+        message = '로그인이 만료되었습니다. 다시 로그인해 주세요.';
+      } else if (error.serverMessage) {
+        message = error.serverMessage;
+      } else if (error.timedOut) {
+        message = '서버 응답이 늦습니다. 메뉴 목록을 확인한 후 다시 시도해 주세요.';
+      } else if (error.status === undefined) {
+        message = '서버에 연결하지 못했습니다. 서버 실행 상태를 확인해 주세요.';
+      }
+
+      setSaveError(message);
       setIsSaving(false);
     }
   };
@@ -99,6 +118,53 @@ function MenuFormDialog({ menu, categories, onClose, onSave }) {
     <p id={`menu-form-${name}-error`} className="admin-field__error">{errors[name]}</p>
   );
 
+  useEffect(() => {
+  if (!imageFile) {
+    setImagePreview('');
+    return;
+  }
+
+  const url = URL.createObjectURL(imageFile);
+  setImagePreview(url);
+
+  return () => {
+    URL.revokeObjectURL(url);
+  };
+}, [imageFile]);
+
+const handleImageChange = (event) => {
+  const file = event.target.files?.[0] ?? null;
+
+  setImageError('');
+
+  if (!file) {
+    setImageFile(null);
+    return;
+  }
+
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setImageError('JPG, PNG, WebP 사진만 선택할 수 있습니다.');
+    setImageFile(null);
+    event.target.value = '';
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    setImageError('사진은 최대 5MB까지 선택할 수 있습니다.');
+    setImageFile(null);
+    event.target.value = '';
+    return;
+  }
+
+  setImageFile(file);
+};
+
   return (
     <dialog
       ref={dialogRef}
@@ -112,10 +178,58 @@ function MenuFormDialog({ menu, categories, onClose, onSave }) {
       <form className="admin-dialog__form" onSubmit={handleSubmit} noValidate>
         <header className="admin-dialog__head">
           <h2 id="menu-form-title" className="admin-dialog__title">{isEdit ? '메뉴 수정' : '메뉴 추가'}</h2>
-          <p className="admin-dialog__note">개발용 mock 저장 · 서버에는 저장되지 않습니다.</p>
+          <p className="admin-dialog__note">
+            메뉴 기본 정보와 옵션을 입력해 주세요.
+          </p>
         </header>
 
         <div className="admin-dialog__body">
+          <div className="admin-field">
+            <label
+              className="admin-field__label"
+              htmlFor="menu-form-image"
+            >
+              메뉴 사진 (선택)
+            </label>
+
+            <input
+              id="menu-form-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleImageChange}
+              disabled={isSaving}
+              aria-describedby="menu-form-image-help"
+            />
+
+            <p
+              id="menu-form-image-help"
+              className="admin-dialog__hint"
+            >
+              JPG, PNG, WebP · 최대 5MB
+            </p>
+
+            {imageError && (
+              <p className="admin-field__error" role="alert">
+                {imageError}
+              </p>
+            )}
+
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="선택한 메뉴 사진 미리보기"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  maxWidth: 240,
+                  height: 160,
+                  objectFit: 'cover',
+                  borderRadius: 12,
+                  marginTop: 12,
+                }}
+              />
+            )}
+          </div>
           <div className="admin-field">
             <label className="admin-field__label" htmlFor="menu-form-menu_name">메뉴 이름</label>
             <input
