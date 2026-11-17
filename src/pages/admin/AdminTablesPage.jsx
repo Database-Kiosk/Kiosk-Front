@@ -8,6 +8,7 @@ import { closeTableSession, fetchAdminTables } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatPrice } from '../../utils/format.js';
 import { formatClock, formatElapsed } from '../../utils/dateTime.js';
+import AdminTableDetailDialog from '../../components/admin/AdminTableDetailDialog.jsx';
 import './AdminTablesPage.css';
 
 const ELAPSED_REFRESH_MS = 30000;
@@ -18,6 +19,7 @@ function AdminTablesPage() {
   const [busyTableId, setBusyTableId] = useState(null);
   const [actionError, setActionError] = useState('');
   const [now, setNow] = useState(() => new Date());
+  const [selectedTableId, setSelectedTableId] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), ELAPSED_REFRESH_MS);
@@ -106,6 +108,7 @@ function AdminTablesPage() {
                     <StatusBadge status={table.table_status} />
                   </div>
 
+
                   {table.session ? (
                     <>
                       <dl className="admin-table-card__info">
@@ -132,14 +135,25 @@ function AdminTablesPage() {
                           <dd>{formatPrice(table.session.total_price)}</dd>
                         </div>
                       </dl>
-                      <button
-                        type="button"
-                        className="admin-btn admin-btn--secondary admin-table-card__action"
-                        disabled={busyTableId === table.table_id}
-                        onClick={() => handleClose(table)}
-                      >
-                        {busyTableId === table.table_id ? '처리 중…' : '이용 완료 처리'}
-                      </button>
+                      <div className="admin-table-card__actions">
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn--secondary admin-table-card__detail"
+                          onClick={() => setSelectedTableId(table.table_id)}
+                        >
+                          상세 보기
+                          <span aria-hidden="true"></span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn--secondary admin-table-card__complete"
+                          disabled={busyTableId === table.table_id}
+                          onClick={() => handleClose(table)}
+                        >
+                          {busyTableId === table.table_id ? '처리 중…' : '이용 완료 처리'}
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <p className="admin-table-card__idle">손님을 기다리는 중입니다.</p>
@@ -149,6 +163,16 @@ function AdminTablesPage() {
             </ul>
           )}
         </>
+      )}
+      {selectedTableId !== null && (
+        <AdminTableDetailDialog
+          key={selectedTableId}
+          tableId={selectedTableId}
+          table={tables?.find(
+            (item) => item.table_id === selectedTableId,
+          )}
+          onClose={() => setSelectedTableId(null)}
+        />
       )}
     </>
   );

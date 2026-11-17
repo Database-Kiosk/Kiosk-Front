@@ -113,7 +113,7 @@ function summarizeTable(table) {
 }
 
 export function fetchAdminTables() {
-  return respond(() => state.tables.map(summarizeTable), []);
+  return adminRequest('/api/admin/tables');
 }
 
 // Ends the open session and makes the table available (MOCK).
@@ -129,6 +129,12 @@ export function closeTableSession(tableId) {
     table.table_status = '이용 가능';
     return summarizeTable(table);
   });
+}
+
+export function fetchAdminTableOrders(tableId) {
+  return adminRequest(
+    `/api/admin/tables/${encodeURIComponent(tableId)}/orders`,
+  );
 }
 
 /* ---------- Menus ---------- */
