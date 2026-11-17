@@ -136,10 +136,7 @@ export function fetchAdminTableOrders(tableId) {
 /* ---------- Menus ---------- */
 
 export function fetchAdminMenus() {
-  return respond(
-    () => ({ categories: state.categories, menus: state.menus }),
-    { categories: state.categories, menus: [] },
-  );
+  return adminRequest('/api/admin/menus');
 }
 
 const nextId = (rows, key) => Math.max(0, ...rows.map((row) => row[key])) + 1;
@@ -153,19 +150,36 @@ const nextId = (rows, key) => Math.max(0, ...rows.map((row) => row[key])) + 1;
 // - orderoption references menu_option (FK), so an option that was ordered cannot simply be deleted;
 //   the schema has no "inactive" flag for options, so the deletion rule must be decided with the backend.
 // - past orders keep their saved prices (orderoption.extra_price), but show the current option name.
-export function saveMenu(menu) {
-  return respond(() => {
-    let optionId = nextId(state.menus.flatMap((item) => item.options), 'option_id');
-    const options = menu.options.map((item) => ({ ...item, option_id: item.option_id ?? optionId++ }));
-    if (menu.menu_id == null) {
-      const created = { ...menu, menu_id: nextId(state.menus, 'menu_id'), image_url: null, options };
-      state.menus.push(created);
-      return created;
-    }
-    const index = state.menus.findIndex((item) => item.menu_id === menu.menu_id);
-    if (index === -1) throw mockError('존재하지 않는 메뉴입니다.', 404);
-    state.menus[index] = { ...state.menus[index], ...menu, options };
-    return state.menus[index];
+export function saveMenu(menu, imageFile = null) {
+  if (menu.menu_id != null) {
+    return Promise.reject(
+      new Error('메뉴 수정 기능은 아직 연결되지 않았습니다.'),
+    );
+  }
+
+  const formData = new FormData();
+
+  const menuData = {
+    menu_name: menu.menu_name,
+    price: menu.price,
+    category_id: menu.category_id,
+    description: menu.description,
+    is_active: menu.is_active,
+    options: menu.options.map((option) => ({
+      option_name: option.option_name,
+      additional_price: option.additional_price,
+    })),
+  };
+
+  formData.append('data', JSON.stringify(menuData));
+
+  if (imageFile) {
+    formData.append('image', imageFile);
+  }
+
+  return adminRequest('/api/admin/menus', {
+    method: 'POST',
+    body: formData,
   });
 }
 

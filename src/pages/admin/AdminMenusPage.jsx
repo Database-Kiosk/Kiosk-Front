@@ -6,6 +6,7 @@ import MenuFormDialog from '../../components/admin/MenuFormDialog.jsx';
 import { fetchAdminMenus, saveMenu, setMenuActive } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatPrice } from '../../utils/format.js';
+import { API_BASE_URL } from '../../config/env.js';
 import './AdminMenusPage.css';
 
 // Menu list for admins: menus off sale are listed too. There is no delete button on purpose:
@@ -55,8 +56,10 @@ function AdminMenusPage() {
     }
   };
 
-  const handleSave = async (menu) => {
-    replaceMenu(await saveMenu(menu)); // errors are shown inside the dialog
+  const handleSave = async (menu, imageFile) => {
+    const savedMenu = await saveMenu(menu, imageFile);
+
+    replaceMenu(savedMenu);
     setDialog(null);
   };
 
@@ -128,7 +131,21 @@ function AdminMenusPage() {
                       <tr key={menu.menu_id} className={isActive ? undefined : 'is-inactive'}>
                         <td>
                           <div className="admin-menus__menu">
-                            <span className="admin-menus__thumb" aria-hidden="true">{menu.menu_name.slice(0, 1)}</span>
+                            {menu.image_url ? (
+                              <img
+                                className="admin-menus__thumb"
+                                src={`${API_BASE_URL.replace(/\/$/, '')}${menu.image_url}`}
+                                alt={`${menu.menu_name} 사진`}
+                                style={{ objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <span
+                                className="admin-menus__thumb"
+                                aria-hidden="true"
+                              >
+                                {menu.menu_name.slice(0, 1)}
+                              </span>
+                            )}
                             <div>
                               <p className="admin-menus__name">{menu.menu_name}</p>
                               {menu.description && <p className="admin-menus__description">{menu.description}</p>}
@@ -147,7 +164,8 @@ function AdminMenusPage() {
                             aria-checked={isActive}
                             aria-label={`${menu.menu_name} 판매 상태`}
                             className="admin-switch"
-                            disabled={busyMenuId === menu.menu_id}
+                            disabled
+                            title="판매 상태 변경 기능은 아직 연결되지 않았습니다."
                             onClick={() => handleToggle(menu)}
                           >
                             <span className="admin-switch__track" aria-hidden="true" />
@@ -158,6 +176,8 @@ function AdminMenusPage() {
                           <button
                             type="button"
                             className="admin-btn admin-btn--secondary"
+                            disabled
+                            title="메뉴 수정 기능은 아직 연결되지 않았습니다."
                             onClick={() => setDialog({ menu })}
                           >
                             수정
