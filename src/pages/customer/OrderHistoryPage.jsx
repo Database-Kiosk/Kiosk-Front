@@ -2,46 +2,13 @@ import { Link, useOutletContext } from 'react-router-dom';
 import { formatPrice } from '../../utils/format.js';
 import './OrderHistoryPage.css';
 
-// 화면 확인용 임시 데이터.
-// 실제 연동 시 현재 테이블의 활성 세션에 속한 주문 조회 결과로 교체한다.
-const mockOrders = [
-  {
-    order_id: 2,
-    order_status: '접수',
-    created_at: '2026-11-16T19:10:00+09:00',
-    total_price: 5000,
-    items: [
-      {
-        order_detail_id: 3,
-        menu_name: '콜라',
-        quantity: 2,
-        unit_price: 2500,
-        options: [],
-      },
-    ],
-  },
-  {
-    order_id: 1,
-    order_status: '조리 중',
-    created_at: '2026-11-16T19:00:00+09:00',
-    total_price: 20000,
-    items: [
-      {
-        order_detail_id: 1,
-        menu_name: '김치찌개',
-        quantity: 2,
-        unit_price: 9000,
-        options: [
-          {
-            option_id: 1,
-            option_name: '공기밥 추가',
-            additional_price: 1000,
-          },
-        ],
-      },
-    ],
-  },
-];
+import { useEffect, useState } from 'react';
+import { fetchTableOrders } from '../../api/orderApi.js';
+import {
+  parseDbDateTime,
+  toDateTimeAttr,
+} from '../../utils/dateTime.js';
+
 
 const statusClasses = {
   접수: 'received',
@@ -50,8 +17,10 @@ const statusClasses = {
 };
 
 function formatOrderTime(value) {
-  return new Date(value).toLocaleString('ko-KR', {
-    timeZone: 'Asia/Seoul',
+  const date = parseDbDateTime(value);
+  if (!date) return '-';
+
+  return date.toLocaleString('ko-KR', {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
@@ -62,7 +31,7 @@ function formatOrderTime(value) {
 
 function getItemTotal(item) {
   const optionPrice = item.options.reduce(
-    (sum, option) => sum + option.additional_price,
+    (sum, option) => sum + option.extra_price,
     0,
   );
 
@@ -72,8 +41,57 @@ function getItemTotal(item) {
 function OrderHistoryPage() {
   const { tableId, toPath } = useOutletContext();
 
-  // 주문이 없는 화면을 확인하려면 mockOrders 대신 []로 바꾸면 된다.
-  const orders = mockOrders;
+  const [history, setHistory] = useState({
+    tableId: null,
+    status: 'loading',
+    orders: [],
+    message: '',
+  });
+  const [reloadCount, setReloadCount] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+
+    fetchTableOrders(tableId)
+      .then((data) => {
+        if (ignore) return;
+
+        setHistory({
+          tableId,
+          status: 'success',
+          orders: data.orders,
+          message: '',
+        });
+      })
+      .catch((error) => {
+        if (ignore) return;
+
+        setHistory({
+          tableId,
+          status: 'error',
+          orders: [],
+          message: error.message,
+        });
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [tableId, reloadCount]);
+
+  const isCurrentTable = history.tableId === tableId;
+  const status = isCurrentTable ? history.status : 'loading';
+  const orders = isCurrentTable ? history.orders : [];
+
+  const refreshHistory = () => {
+    setHistory({
+      tableId,
+      status: 'loading',
+      orders: [],
+      message: '',
+    });
+    setReloadCount((count) => count + 1);
+  };
 
   const totalPrice = orders.reduce(
     (sum, order) => sum + order.total_price,
@@ -94,15 +112,17 @@ function OrderHistoryPage() {
         <h1 className="order-section__title">주문 내역</h1>
       </div>
 
-      <p className="history-description">
-        테이블 {tableId}번의 이번 이용 중 주문 내역입니다.
-      </p>
+      
 
-      <p className="history-preview">
-        화면 확인용 예시입니다. 실제 주문 내역은 아직 연결되지 않았습니다.
-      </p>
+      {status === 'loading' && (
+        <p role="status">주문 내역을 불러오는 중입니다.</p>
+      )}
 
-      {orders.length === 0 ? (
+      {status === 'error' && (
+        <p role="alert">{history.message}</p>
+      )}
+
+      {status === 'success' && (orders.length === 0 ? (
         <div className="history-empty">
           <p>아직 주문 내역이 없습니다.</p>
 
@@ -126,9 +146,9 @@ function OrderHistoryPage() {
 
                     <time
                       className="history-card__time"
-                      dateTime={order.created_at}
+                      dateTime={toDateTimeAttr(order.order_time)}
                     >
-                      {formatOrderTime(order.created_at)}
+                      {formatOrderTime(order.order_time)}
                     </time>
                   </div>
 
@@ -165,7 +185,7 @@ function OrderHistoryPage() {
                           {item.options.map((option) => (
                             <li key={option.option_id}>
                               + {option.option_name}
-                              {' '}({formatPrice(option.additional_price)})
+                              {' '}({formatPrice(option.extra_price)})
                             </li>
                           ))}
                         </ul>
@@ -196,7 +216,7 @@ function OrderHistoryPage() {
             </Link>
           </div>
         </>
-      )}
+      ))}
     </section>
   );
 }
