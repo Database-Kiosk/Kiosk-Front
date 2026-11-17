@@ -8,6 +8,7 @@ import PaymentPage from './pages/customer/PaymentPage.jsx';
 import OrderCompletePage from './pages/customer/OrderCompletePage.jsx';
 import AdminLoginPage from './pages/admin/AdminLoginPage.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
+import RequireAdmin from './components/admin/RequireAdmin.jsx';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage.jsx';
 import AdminTablesPage from './pages/admin/AdminTablesPage.jsx';
 import AdminMenusPage from './pages/admin/AdminMenusPage.jsx';
@@ -31,14 +32,17 @@ function App() {
         <Route path="history" element={<OrderHistoryPage />} />
       </Route>
 
-      {/* Admin (Front #9: design with mock data, no access control yet) */}
+      {/* Admin: real login (Kiosk-Server cookie); every page except /admin/login needs it (RequireAdmin).
+          The screens' data is still mock (api/adminApi.js). */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="/admin/orders" replace />} />
-        <Route path="orders" element={<AdminOrdersPage />} />
-        <Route path="tables" element={<AdminTablesPage />} />
-        <Route path="menus" element={<AdminMenusPage />} />
-        <Route path="sales" element={<AdminSalesPage />} />
+      <Route path="/admin" element={<RequireAdmin />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/orders" replace />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="tables" element={<AdminTablesPage />} />
+          <Route path="menus" element={<AdminMenusPage />} />
+          <Route path="sales" element={<AdminSalesPage />} />
+        </Route>
       </Route>
 
       <Route

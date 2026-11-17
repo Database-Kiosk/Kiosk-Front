@@ -68,6 +68,11 @@
   color: var(--color-primary-pressed);
 }
 
+.admin-sidebar__logout:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .admin-sidebar__icon {
   flex: none;
   width: 22px;
