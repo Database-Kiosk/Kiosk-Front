@@ -116,19 +116,15 @@ export function fetchAdminTables() {
   return adminRequest('/api/admin/tables');
 }
 
-// Ends the open session and makes the table available (MOCK).
-// Design-only policy: allowed even when some orders are not delivered yet (the screen only warns).
-// The real server needs its own decision here (e.g. reject with 409 while orders are pending, or allow
-// it), and must end the session and update dining_table.table_status in one transaction.
+
+// 테이블 이용 종료
 export function closeTableSession(tableId) {
-  return respond(() => {
-    const table = state.tables.find((item) => item.table_id === tableId);
-    const session = state.sessions.find((item) => item.table_id === tableId && item.ended_at === null);
-    if (!table || !session) throw mockError('이용 중인 테이블이 아닙니다.', 409);
-    session.ended_at = toDbDateTime(new Date());
-    table.table_status = '이용 가능';
-    return summarizeTable(table);
-  });
+  return adminRequest(
+    `/api/admin/tables/${encodeURIComponent(tableId)}/complete`,
+    {
+      method: 'PATCH',
+    },
+  );
 }
 
 export function fetchAdminTableOrders(tableId) {

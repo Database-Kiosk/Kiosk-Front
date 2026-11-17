@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import StatusBadge from '../../components/admin/StatusBadge.jsx';
 import SummaryCard from '../../components/admin/SummaryCard.jsx';
-import { closeTableSession, fetchAdminTables } from '../../api/adminApi.js';
+import { closeTableSession, describeAdminError, fetchAdminTables } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatPrice } from '../../utils/format.js';
 import { formatClock, formatElapsed } from '../../utils/dateTime.js';
@@ -13,41 +13,125 @@ import './AdminTablesPage.css';
 
 const ELAPSED_REFRESH_MS = 30000;
 
+function TablePopup({
+  title,
+  message,
+  onConfirm,
+  onCancel,
+}) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (!dialog.open) dialog.showModal();
+
+    return () => {
+      if (dialog.open) dialog.close();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="table-popup"
+      aria-labelledby="table-popup-title"
+      aria-describedby="table-popup-message"
+      onCancel={(event) => {
+        event.preventDefault();
+        (onCancel || onConfirm)();
+      }}
+    >
+      <h2 id="table-popup-title">{title}</h2>
+      <p id="table-popup-message">{message}</p>
+
+      <div className="table-popup__actions">
+        {onCancel && (
+          <button
+            type="button"
+            className="admin-btn admin-btn--secondary"
+            onClick={onCancel}
+          >
+            취소
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="admin-btn admin-btn--secondary"
+          onClick={onConfirm}
+          autoFocus
+        >
+          확인
+        </button>
+      </div>
+    </dialog>
+  );
+}
+
 function AdminTablesPage() {
   const { status, data: tables, retry, setData } = useAdminData(fetchAdminTables);
   const [filter, setFilter] = useState('all');
   const [busyTableId, setBusyTableId] = useState(null);
-  const [actionError, setActionError] = useState('');
   const [now, setNow] = useState(() => new Date());
   const [selectedTableId, setSelectedTableId] = useState(null);
+  const [confirmTable, setConfirmTable] = useState(null);
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), ELAPSED_REFRESH_MS);
     return () => clearInterval(timer);
   }, []);
 
-  // MOCK: ends the session in the in-memory mock data only (see api/adminApi.js).
-  // Closing with undelivered orders is allowed after a warning: a design-only policy. The real rule
-  // (block or allow) is decided when the server API is built.
-  const handleClose = async (table) => {
-    const { pending_count: pendingCount } = table.session;
-    const warning = pendingCount > 0 ? `아직 전달되지 않은 주문이 ${pendingCount}건 있습니다.\n` : '';
-    const confirmed = window.confirm(
-      `${warning}테이블 ${table.table_id}번을 이용 완료 처리할까요?\n(개발용 mock: 서버에는 저장되지 않습니다)`,
-    );
-    if (!confirmed) return;
+// 이용 완료 버튼을 누르면 확인 팝업 표시
+const handleClose = (table) => {
+  if (busyTableId !== null || !table.session) return;
 
-    setBusyTableId(table.table_id);
-    setActionError('');
-    try {
-      const updated = await closeTableSession(table.table_id);
-      setData((list) => list.map((item) => (item.table_id === updated.table_id ? updated : item)));
-    } catch {
-      setActionError(`테이블 ${table.table_id}번을 이용 완료 처리하지 못했습니다. 목록을 새로고침해 주세요.`);
-    } finally {
-      setBusyTableId(null);
-    }
-  };
+  setConfirmTable(table);
+};
+
+// 팝업에서 확인을 누르면 실제 API 호출
+const handleConfirmClose = async () => {
+  if (!confirmTable || busyTableId !== null) return;
+
+  const table = confirmTable;
+
+  setConfirmTable(null);
+  setBusyTableId(table.table_id);
+
+  try {
+    const updated = await closeTableSession(table.table_id);
+
+    setData((list) =>
+      list.map((item) =>
+        item.table_id === updated.table_id ? updated : item,
+      ),
+    );
+
+    setSelectedTableId((current) =>
+      current === table.table_id ? null : current,
+    );
+
+    setNotice(`테이블 ${table.table_id}번의 이용이 종료되었습니다.`);
+  } catch (error) {
+    const fallback = '테이블 이용을 종료하지 못했습니다.';
+
+    const message =
+      error.status >= 400 &&
+      error.status < 500 &&
+      error.status !== 401
+        ? error.serverMessage || fallback
+        : describeAdminError(error, fallback);
+
+    setNotice(
+      error.status === undefined
+        ? `${message} 목록을 새로고침해 처리 결과를 확인해 주세요.`
+        : message,
+    );
+  } finally {
+    setBusyTableId(null);
+  }
+};
 
   const inUse = tables?.filter((table) => table.table_status === '이용 중') ?? [];
   const visibleTables = tables?.filter((table) => filter === 'all' || table.table_status === filter) ?? [];
@@ -59,13 +143,11 @@ function AdminTablesPage() {
           type="button"
           className="admin-btn admin-btn--secondary"
           onClick={retry}
-          disabled={status === 'loading'}
+          disabled={status === 'loading' || busyTableId !== null}
         >
           새로고침
         </button>
       </AdminPageHeader>
-
-      {actionError && <p className="admin-alert" role="alert">{actionError}</p>}
 
       {status === 'loading' && <AdminStateView status="loading" message="테이블 정보를 불러오는 중입니다…" />}
       {status === 'error' && <AdminStateView status="error" message="테이블 정보를 불러오지 못했습니다." onRetry={retry} />}
@@ -148,10 +230,12 @@ function AdminTablesPage() {
                         <button
                           type="button"
                           className="admin-btn admin-btn--secondary admin-table-card__complete"
-                          disabled={busyTableId === table.table_id}
+                          disabled={busyTableId !== null}
                           onClick={() => handleClose(table)}
                         >
-                          {busyTableId === table.table_id ? '처리 중…' : '이용 완료 처리'}
+                          {busyTableId === table.table_id
+                            ? '처리 중…'
+                            : '이용 완료 처리'}
                         </button>
                       </div>
                     </>
@@ -172,6 +256,22 @@ function AdminTablesPage() {
             (item) => item.table_id === selectedTableId,
           )}
           onClose={() => setSelectedTableId(null)}
+        />
+      )}
+      {confirmTable && (
+        <TablePopup
+          title="테이블 이용 완료"
+          message={`테이블 ${confirmTable.table_id}번의 이용을 완료 처리할까요?`}
+          onConfirm={handleConfirmClose}
+          onCancel={() => setConfirmTable(null)}
+        />
+      )}
+
+      {notice && (
+        <TablePopup
+          title="안내"
+          message={notice}
+          onConfirm={() => setNotice('')}
         />
       )}
     </>

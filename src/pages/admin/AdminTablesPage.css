@@ -92,3 +92,36 @@
   font-size: var(--font-size-sm);
   text-align: center;
 }
+
+.table-popup {
+  width: min(400px, calc(100vw - 40px));
+  box-sizing: border-box;
+  padding: 28px;
+  border: none;
+  border-radius: 16px;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 20%);
+}
+
+.table-popup::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.table-popup h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.table-popup p {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.table-popup__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
