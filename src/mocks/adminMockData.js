@@ -1,10 +1,10 @@
-// MOCK data for the admin screens (Front #9, design only).
-// Kiosk-Server has no admin order/table/menu/sales API yet, so these screens run on this data.
+// MOCK data for the admin table / menu / sales screens (Front #9, design only).
+// The order screen uses the real API (Front #11); the mock orders below only feed the mock table
+// summaries and sales report.
 // Field names and status values follow DB/schema.sql (snake_case, Korean ENUM strings, is_active 0/1),
 // so the screens can switch to the real API later with few changes.
 import { toDbDateTime } from '../utils/dateTime.js';
 
-export const ORDER_STATUSES = ['접수', '조리 중', '전달 완료'];
 export const TABLE_STATUSES = ['이용 중', '이용 가능'];
 
 const categories = [

@@ -17,10 +17,12 @@ import { API_BASE_URL } from '../config/env.js';
 //   The timeout covers the whole request: from sending it until the response body has been read.
 // - An abort through the caller's `signal`: the fetch AbortError (name 'AbortError'), never `timedOut`,
 //   also when it happens while the body is being read.
+//
+// adminRequest is also used by the admin data APIs (api/adminApi.js): same cookie, timeout and errors.
 
 export const AUTH_TIMEOUT_MS = 10000;
 
-async function request(path, { method = 'GET', body, signal } = {}) {
+export async function adminRequest(path, { method = 'GET', body, signal } = {}) {
   // AbortController + setTimeout instead of AbortSignal.timeout/any (missing in older browsers).
   const controller = new AbortController();
   let timedOut = false;
@@ -45,7 +47,7 @@ async function request(path, { method = 'GET', body, signal } = {}) {
     });
 
     if (!response.ok) {
-      const error = new Error(`Admin auth request failed (${response.status})`);
+      const error = new Error(`Admin request failed (${response.status})`);
       error.status = response.status;
       try {
         const data = await response.json();
@@ -74,15 +76,15 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 
 // Resolves with { adminId } and sets the login cookie.
 export function loginAdmin({ adminId, password }) {
-  return request('/api/admin/login', { method: 'POST', body: { adminId, password } });
+  return adminRequest('/api/admin/login', { method: 'POST', body: { adminId, password } });
 }
 
 // Resolves with { adminId } while logged in; rejects with status 401 when not.
 export function fetchAdminMe({ signal } = {}) {
-  return request('/api/admin/me', { signal });
+  return adminRequest('/api/admin/me', { signal });
 }
 
 // Clears the login cookie on the server. A rejection means the cookie may still be there.
 export function logoutAdmin() {
-  return request('/api/admin/logout', { method: 'POST' });
+  return adminRequest('/api/admin/logout', { method: 'POST' });
 }

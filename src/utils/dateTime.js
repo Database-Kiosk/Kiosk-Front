@@ -32,6 +32,20 @@ export function formatClock(value) {
   return date ? `${pad(date.getHours())}:${pad(date.getMinutes())}` : '-';
 }
 
+// Same day as `now` -> '19:05'; another day -> '11월 16일 19:05'
+export function formatOrderTime(value, now = new Date()) {
+  const date = parseDbDateTime(value);
+  if (!date) return '-';
+  const clock = formatClock(value);
+  return toDbDate(date) === toDbDate(now) ? clock : `${date.getMonth() + 1}월 ${date.getDate()}일 ${clock}`;
+}
+
+// '2026-11-17 19:05:00' -> '11월 17일 (화) 19:05'
+export function formatDateTime(value) {
+  const date = parseDbDateTime(value);
+  return date ? `${formatDayLabel(toDbDate(date))} ${formatClock(value)}` : '-';
+}
+
 // Time since the value: '방금', '12분 전', '1시간 5분 전'
 export function formatElapsed(value, now = new Date()) {
   const date = parseDbDateTime(value);

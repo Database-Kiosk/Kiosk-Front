@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Loads data for an admin screen (same pattern as useMenus: the latest request wins).
  * @param {(arg?: any) => Promise<any>} load stable function from api/adminApi.js
  * @param {any} [arg] passed to `load`; a new value starts a new request (e.g. sales period)
- * @returns {{ status: 'loading'|'success'|'error', data: any, retry: () => void,
- *   setData: (updater: (data: any) => any) => void }}
+ * @returns {{ status: 'loading'|'success'|'error', data: any, error: Error|null, retry: () => void,
+ *   setData: (updater: (data: any) => any) => void }} error: the failed request's error (e.g. its `status`)
  */
 export function useAdminData(load, arg) {
   const [reloadCount, setReloadCount] = useState(0);
   // Result of the last finished request, tagged with the request it belongs to.
-  const [result, setResult] = useState({ requestKey: null, status: 'loading', data: null });
+  const [result, setResult] = useState({ requestKey: null, status: 'loading', data: null, error: null });
   const requestKey = `${String(arg)}:${reloadCount}`;
   // Counts local changes (setData). A load that was in flight while a change was saved may hold data
   // read before that change (real API), so its result is not shown and the data is loaded again.
@@ -27,10 +27,10 @@ export function useAdminData(load, arg) {
           setReloadCount((count) => count + 1);
           return;
         }
-        setResult({ requestKey, status: 'success', data });
+        setResult({ requestKey, status: 'success', data, error: null });
       })
-      .catch(() => {
-        if (!ignore) setResult({ requestKey, status: 'error', data: null });
+      .catch((error) => {
+        if (!ignore) setResult({ requestKey, status: 'error', data: null, error });
       });
 
     return () => {
@@ -50,5 +50,11 @@ export function useAdminData(load, arg) {
   // Until the current request finishes, the previous result does not apply.
   const status = result.requestKey === requestKey ? result.status : 'loading';
 
-  return { status, data: status === 'success' ? result.data : null, retry, setData };
+  return {
+    status,
+    data: status === 'success' ? result.data : null,
+    error: status === 'error' ? result.error : null,
+    retry,
+    setData,
+  };
 }
