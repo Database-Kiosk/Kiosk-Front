@@ -37,17 +37,14 @@
 }
 
 .admin-login__title {
-  margin: 0;
+  margin: 0 0 var(--space-5);
   font-size: 1.5rem;
 }
 
-.admin-login__dev-note {
-  margin: var(--space-2) 0 var(--space-5);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  background: #fff8ec;
-  color: #7a4a00;
-  font-size: 0.8125rem;
+/* Login check (GET /api/admin/me) inside the card: no extra frame */
+.admin-login__checking .admin-state {
+  padding: var(--space-6) 0;
+  border: 0;
 }
 
 .admin-login__form {

@@ -2,9 +2,9 @@
 // Nothing here sends a request to Kiosk-Server and nothing is saved: changes live in this module's
 // memory and are lost on a page reload. Each function keeps the shape a real API call would have
 // (async, snake_case fields, Error with `status`), so only the function bodies change when the
-// admin APIs are built.
+// admin APIs are built. Login/logout are real and live in adminAuthApi.js.
 //
-// Dev only: add ?preview=loading|empty|error to an admin URL to check those screen states.
+// Dev only (after logging in): add ?preview=loading|empty|error to an admin URL to check those screen states.
 import { createAdminMockState, ORDER_STATUSES } from '../mocks/adminMockData.js';
 import { buildSalesReport, createPastSales } from '../mocks/adminSalesMock.js';
 import { toDbDateTime } from '../utils/dateTime.js';
@@ -20,7 +20,6 @@ function createState() {
 
 // Reset on every page load (module evaluated again).
 const state = createState();
-let mockAdminId = null;
 
 function getPreview() {
   if (!import.meta.env.DEV) return null;
@@ -53,22 +52,6 @@ function respond(makeData, emptyData) {
     }, MOCK_DELAY_MS);
   });
 }
-
-/* ---------- Login (MOCK: no real authentication) ---------- */
-
-// Real API for later: POST /api/admin/login { adminId, password } → cookie. Here any input is accepted.
-export function mockAdminLogin({ adminId }) {
-  return respond(() => {
-    mockAdminId = adminId;
-    return { adminId };
-  });
-}
-
-export function mockAdminLogout() {
-  mockAdminId = null;
-}
-
-export const getMockAdminId = () => mockAdminId;
 
 /* ---------- Orders ---------- */
 

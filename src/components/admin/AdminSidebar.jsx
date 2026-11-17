@@ -1,5 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { getMockAdminId, mockAdminLogout } from '../../api/adminApi.js';
+import { NavLink } from 'react-router-dom';
 import './AdminSidebar.css';
 
 // Inline SVG icons (no icon library). Paths use currentColor, so they follow the link color.
@@ -27,16 +26,8 @@ const NAV_ITEMS = [
 ];
 
 // PC: full sidebar with labels. Tablet: narrow rail. Small screens: top bar (see AdminSidebar.css).
-function AdminSidebar() {
-  const navigate = useNavigate();
-  const adminId = getMockAdminId();
-
-  // MOCK logout: forgets the mock admin ID only (no server request, no real session).
-  const handleLogout = () => {
-    mockAdminLogout();
-    navigate('/admin/login', { replace: true });
-  };
-
+// adminId: the logged-in admin (from GET /api/admin/me). Logout itself is handled by AdminLayout.
+function AdminSidebar({ adminId, onLogout, isLoggingOut }) {
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar__brand">
@@ -58,13 +49,18 @@ function AdminSidebar() {
       </nav>
 
       <div className="admin-sidebar__footer">
-        <p className="admin-sidebar__account" title={adminId ?? undefined}>
-          {adminId ?? '로그인 정보 없음'}
-          <span className="admin-sidebar__account-note">mock 로그인</span>
+        <p className="admin-sidebar__account" title={adminId}>
+          {adminId}
+          <span className="admin-sidebar__account-note">로그인 계정</span>
         </p>
-        <button type="button" className="admin-sidebar__link admin-sidebar__logout" onClick={handleLogout}>
+        <button
+          type="button"
+          className="admin-sidebar__link admin-sidebar__logout"
+          onClick={onLogout}
+          disabled={isLoggingOut}
+        >
           <Icon name="logout" />
-          <span className="admin-sidebar__label">로그아웃</span>
+          <span className="admin-sidebar__label">{isLoggingOut ? '로그아웃 중…' : '로그아웃'}</span>
         </button>
       </div>
     </aside>

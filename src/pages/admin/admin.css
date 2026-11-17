@@ -48,6 +48,24 @@
   padding: var(--space-5);
 }
 
+/* Login check screen (RequireAdmin) and the logout error above the page content */
+.admin-guard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5) var(--space-4);
+}
+
+.admin-guard .admin-state {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* .admin-alert is declared later in this file, so both classes are used to win over its margin. */
+.admin-alert.admin-layout__alert {
+  margin: var(--space-4) var(--space-5) 0;
+}
+
 /* Page header */
 .admin-page-header {
   display: flex;
@@ -274,6 +292,10 @@ textarea.admin-input {
 @media (max-width: 1023px) {
   .admin-main {
     padding: var(--space-4);
+  }
+
+  .admin-alert.admin-layout__alert {
+    margin: var(--space-4) var(--space-4) 0;
   }
 
   .admin-table th,
