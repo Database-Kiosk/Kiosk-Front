@@ -1,0 +1,45 @@
+/* Admin sales report */
+
+.admin-sales__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.admin-sales__bar-cell {
+  width: 30%;
+  min-width: 100px;
+}
+
+.admin-sales__bar {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.admin-sales__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.admin-sales__menu {
+  display: block;
+  font-weight: 600;
+}
+
+.admin-sales__category {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+/* Tablet: tables stacked */
+@media (max-width: 1199px) {
+  .admin-sales__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

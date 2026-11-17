@@ -1,0 +1,150 @@
+/* Admin menu list */
+
+.admin-menus__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-menus__search {
+  width: 240px;
+  min-height: 44px;
+}
+
+.admin-menus__menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 220px;
+}
+
+.admin-menus__thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--admin-accent-soft);
+  color: var(--color-primary-pressed);
+  font-weight: 700;
+}
+
+.admin-menus__name {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.admin-menus__description {
+  max-width: 280px;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+}
+
+.admin-menus__options {
+  max-width: 200px;
+  overflow: hidden;
+  color: var(--color-muted);
+  text-overflow: ellipsis;
+}
+
+.admin-menus__table tr.is-inactive td {
+  background: #fafafa;
+}
+
+.admin-menus__table tr.is-inactive .admin-menus__name {
+  color: var(--color-muted);
+}
+
+/* On/off switch for sale state */
+.admin-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-switch__track {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--color-disabled);
+  transition: background-color 0.15s ease;
+}
+
+.admin-switch__track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  transition: transform 0.15s ease;
+}
+
+.admin-switch[aria-checked='true'] {
+  color: var(--status-completed);
+}
+
+.admin-switch[aria-checked='true'] .admin-switch__track {
+  background: #2e9d57;
+}
+
+.admin-switch[aria-checked='true'] .admin-switch__track::after {
+  transform: translateX(16px);
+}
+
+.admin-switch:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.admin-switch:focus-visible {
+  outline: 3px solid rgba(255, 122, 0, 0.35);
+  outline-offset: 2px;
+}
+
+/* Tablet: the option column is hidden so the sale switch and edit button fit without scrolling
+   (options are still shown in the edit dialog). */
+@media (max-width: 1023px) {
+  .admin-menus__search {
+    width: 100%;
+  }
+
+  .admin-menus__options {
+    display: none;
+  }
+
+  .admin-menus__menu {
+    min-width: 180px;
+  }
+
+  .admin-menus__description {
+    max-width: 200px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-switch__track,
+  .admin-switch__track::after {
+    transition: none;
+  }
+}
