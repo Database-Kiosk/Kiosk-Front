@@ -6,7 +6,8 @@ import './admin.css';
 
 // Shared layout for /admin/orders, /admin/tables, /admin/menus, /admin/sales.
 // Rendered by RequireAdmin only after the login was confirmed; { adminId } comes from its outlet context.
-// Login and logout use the real Kiosk-Server API; the screens' data is still mock (api/adminApi.js).
+// Login, logout and the order screen use the real Kiosk-Server API; the table, menu and sales screens'
+// data is still mock (api/adminApi.js).
 function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -44,8 +45,8 @@ function AdminLayout() {
 
       <div className="admin-body">
         <p className="admin-dev-banner" role="note">
-          <strong>개발용 화면</strong> · mock 데이터를 사용합니다. 상태 변경·메뉴 저장은 서버에 저장되지 않으며,
-          새로고침하면 처음 상태로 돌아갑니다.
+          <strong>개발용 화면</strong> · 주문 관리는 실제 서버 데이터를 사용합니다. 테이블·메뉴·매출 화면은 mock
+          데이터이며, 이용 완료 처리·메뉴 저장은 서버에 저장되지 않고 새로고침하면 처음 상태로 돌아갑니다.
         </p>
 
         {logoutError && <p className="admin-alert admin-layout__alert" role="alert">{logoutError}</p>}

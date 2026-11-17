@@ -1,11 +1,15 @@
-// Admin screen data — MOCK ONLY (Front #9, design issue).
-// Nothing here sends a request to Kiosk-Server and nothing is saved: changes live in this module's
-// memory and are lost on a page reload. Each function keeps the shape a real API call would have
-// (async, snake_case fields, Error with `status`), so only the function bodies change when the
-// admin APIs are built. Login/logout are real and live in adminAuthApi.js.
+// Admin screen data.
+// - Orders: real Kiosk-Server API (Front #11), sent with the admin login cookie through adminRequest
+//   (adminAuthApi.js: same timeout and errors as login). Never mixed with the mock data below.
+// - Tables, menus, sales: MOCK ONLY (Front #9). Nothing is sent to Kiosk-Server and nothing is saved:
+//   changes live in this module's memory and are lost on a page reload. Each function keeps the shape
+//   a real API call would have (async, snake_case fields, Error with `status`).
+// Login/logout are real and live in adminAuthApi.js.
 //
-// Dev only (after logging in): add ?preview=loading|empty|error to an admin URL to check those screen states.
-import { createAdminMockState, ORDER_STATUSES } from '../mocks/adminMockData.js';
+// Dev only (after logging in): add ?preview=loading|empty|error to an admin URL to check those screen
+// states. It applies to the mock functions only (not to the order screen).
+import { adminRequest } from './adminAuthApi.js';
+import { createAdminMockState } from '../mocks/adminMockData.js';
 import { buildSalesReport, createPastSales } from '../mocks/adminSalesMock.js';
 import { toDbDateTime } from '../utils/dateTime.js';
 
@@ -53,23 +57,40 @@ function respond(makeData, emptyData) {
   });
 }
 
-/* ---------- Orders ---------- */
+/* ---------- Orders (real API) ---------- */
 
-// All mock orders, newest first.
-export function fetchAdminOrders() {
-  return respond(() => [...state.orders].sort((a, b) => b.order_id - a.order_id), []);
+// orders.order_status ENUM values (Kiosk-Server DB/schema.sql), in the order a status moves forward.
+export const ORDER_STATUSES = ['접수', '조리 중', '전달 완료'];
+
+// Message for a failed admin request: login expired (401), timeout, no answer, or `fallback` otherwise.
+export function describeAdminError(error, fallback) {
+  if (error?.status === 401) return '로그인이 만료되었습니다. 다시 로그인해 주세요.';
+  if (error?.timedOut) return '서버 응답이 늦어 요청을 중단했습니다. 잠시 후 다시 시도해 주세요.';
+  if (error?.status === undefined) return '서버에 연결하지 못했습니다. 네트워크 상태를 확인해 주세요.';
+  return fallback;
 }
 
+// GET /api/admin/orders → every order (ended sessions included), newest first:
+// [{ order_id, session_id, table_id, order_status, order_time, total_price,
+//    items: [{ order_detail_id, menu_id, menu_name, quantity, unit_price,
+//              options: [{ option_id, option_name, extra_price }] }] }]
+export function fetchAdminOrders() {
+  return adminRequest('/api/admin/orders');
+}
+
+// GET /api/admin/orders/:orderId → one order as above plus session: { session_id, started_at, ended_at }.
+// 400 / 404 (no such order): { message }
+export function fetchAdminOrderById(orderId) {
+  return adminRequest(`/api/admin/orders/${encodeURIComponent(orderId)}`);
+}
+
+// PATCH /api/admin/orders/:orderId/status  body { order_status }
+// Only one step forward (접수 → 조리 중 → 전달 완료). 200: the full order (same shape as fetchAdminOrderById).
+// 400 / 404 / 409 (status already changed, or not the next step): { message }
 export function updateOrderStatus(orderId, nextStatus) {
-  return respond(() => {
-    const order = state.orders.find((item) => item.order_id === orderId);
-    if (!order) throw mockError('존재하지 않는 주문입니다.', 404);
-    // Status only moves forward: 접수 → 조리 중 → 전달 완료
-    if (ORDER_STATUSES.indexOf(nextStatus) !== ORDER_STATUSES.indexOf(order.order_status) + 1) {
-      throw mockError('변경할 수 없는 주문 상태입니다.', 409);
-    }
-    order.order_status = nextStatus;
-    return order;
+  return adminRequest(`/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+    method: 'PATCH',
+    body: { order_status: nextStatus },
   });
 }
 

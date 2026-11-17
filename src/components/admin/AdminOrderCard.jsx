@@ -1,6 +1,6 @@
 import StatusBadge from './StatusBadge.jsx';
 import { formatPrice } from '../../utils/format.js';
-import { formatClock, formatElapsed, toDateTimeAttr } from '../../utils/dateTime.js';
+import { formatElapsed, formatOrderTime, toDateTimeAttr } from '../../utils/dateTime.js';
 
 // Next step button per status. '전달 완료' is the last status (no button).
 const NEXT_STEP = {
@@ -8,8 +8,9 @@ const NEXT_STEP = {
   '조리 중': { label: '전달 완료', status: '전달 완료' },
 };
 
-// One order on the admin order board. `now` refreshes the elapsed time.
-function AdminOrderCard({ order, now, isBusy, onAdvance }) {
+// One order on the admin order board. `now` refreshes the elapsed time (and decides what "today" is:
+// orders of another day also show their date).
+function AdminOrderCard({ order, now, isBusy, onAdvance, onOpenDetail }) {
   const nextStep = NEXT_STEP[order.order_status];
   const isDone = !nextStep;
 
@@ -21,7 +22,7 @@ function AdminOrderCard({ order, now, isBusy, onAdvance }) {
           <p className="admin-order-card__id">주문 #{order.order_id}</p>
         </div>
         <div className="admin-order-card__time">
-          <time dateTime={toDateTimeAttr(order.order_time)}>{formatClock(order.order_time)}</time>
+          <time dateTime={toDateTimeAttr(order.order_time)}>{formatOrderTime(order.order_time, now)}</time>
           {!isDone && <span className="admin-order-card__elapsed">{formatElapsed(order.order_time, now)}</span>}
         </div>
       </header>
@@ -47,16 +48,27 @@ function AdminOrderCard({ order, now, isBusy, onAdvance }) {
           <StatusBadge status={order.order_status} />
           <strong className="admin-order-card__total">{formatPrice(order.total_price)}</strong>
         </div>
-        {nextStep && (
+        <div className="admin-order-card__actions">
           <button
             type="button"
-            className="admin-btn admin-btn--primary admin-order-card__action"
+            className="admin-btn admin-btn--secondary admin-order-card__detail"
+            aria-label={`주문 #${order.order_id} 상세 보기`}
             disabled={isBusy}
-            onClick={() => onAdvance(order, nextStep.status)}
+            onClick={() => onOpenDetail(order.order_id)}
           >
-            {isBusy ? '변경 중…' : nextStep.label}
+            상세 보기
           </button>
-        )}
+          {nextStep && (
+            <button
+              type="button"
+              className="admin-btn admin-btn--primary admin-order-card__action"
+              disabled={isBusy}
+              onClick={() => onAdvance(order, nextStep.status)}
+            >
+              {isBusy ? '변경 중…' : nextStep.label}
+            </button>
+          )}
+        </div>
       </footer>
     </article>
   );

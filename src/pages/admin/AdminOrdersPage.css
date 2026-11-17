@@ -1,8 +1,39 @@
 /* Admin order board (AdminOrdersPage + AdminOrderCard) */
 
+.admin-orders__alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.admin-orders__alert p {
+  margin: 0;
+}
+
+/* Table filter + status tabs (the tabs are shown on tablets only) */
+.admin-orders__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-orders__table-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-orders__table-filter .admin-input {
+  width: auto;
+  min-width: 150px;
+}
+
 .admin-orders__tabs {
   display: none;
-  margin-bottom: var(--space-4);
 }
 
 .admin-kanban {
@@ -143,8 +174,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+.admin-order-card__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Equal widths; the detail button fills the row when there is no next step (delivered orders). */
+.admin-order-card__detail,
 .admin-order-card__action {
-  width: 100%;
+  flex: 1 1 0;
   min-height: var(--touch-min);
 }
 

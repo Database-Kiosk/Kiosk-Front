@@ -1,0 +1,81 @@
+/* Order detail dialog (AdminOrderDetailDialog). Base dialog styles: .admin-dialog in MenuFormDialog.css */
+
+.admin-order-detail__info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
+.admin-order-detail__info dt {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.admin-order-detail__info dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order-detail__heading {
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-base);
+}
+
+.admin-order-detail__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-order-detail__item {
+  padding: var(--space-3) 0;
+}
+
+.admin-order-detail__item + .admin-order-detail__item {
+  border-top: 1px dashed var(--color-border);
+}
+
+.admin-order-detail__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order-detail__menu {
+  font-weight: 600;
+}
+
+.admin-order-detail__option {
+  margin-top: 2px;
+  padding-left: var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.admin-order-detail__subtotal {
+  margin-top: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
+.admin-order-detail__subtotal strong {
+  color: var(--color-text);
+}
+
+.admin-order-detail__total {
+  align-items: center;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-lg);
+}
+
+@media (max-width: 480px) {
+  .admin-order-detail__info {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
