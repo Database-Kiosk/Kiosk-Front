@@ -138,20 +138,21 @@ function AdminTablesPage() {
                       <div className="admin-table-card__actions">
                         <button
                           type="button"
-                          className="admin-btn admin-btn--secondary admin-table-card__detail"
+                          className="admin-btn admin-btn--secondary"
                           onClick={() => setSelectedTableId(table.table_id)}
                         >
                           상세 보기
-                          <span aria-hidden="true"></span>
                         </button>
 
                         <button
                           type="button"
-                          className="admin-btn admin-btn--secondary admin-table-card__complete"
+                          className="admin-btn admin-btn--secondary"
                           disabled={busyTableId === table.table_id}
                           onClick={() => handleClose(table)}
                         >
-                          {busyTableId === table.table_id ? '처리 중…' : '이용 완료 처리'}
+                          {busyTableId === table.table_id
+                            ? '처리 중…'
+                            : '이용 완료 처리'}
                         </button>
                       </div>
                     </>
