@@ -60,9 +60,13 @@ export async function createOrder(orderRequest, { timeoutMs = ORDER_TIMEOUT_MS }
   }
 }
 
-export async function fetchTableOrders(tableId) {
+export async function fetchTableOrders(tableId, { signal } = {}) {
   const response = await fetch(
-    `${API_BASE_URL}/api/tables/${tableId}/orders`,
+    `${API_BASE_URL}/api/tables/${encodeURIComponent(tableId)}/orders`,
+    {
+      signal,
+      cache: 'no-store',
+    },
   );
 
   if (!response.ok) {

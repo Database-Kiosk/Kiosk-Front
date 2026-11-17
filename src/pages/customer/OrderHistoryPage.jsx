@@ -47,14 +47,29 @@ function OrderHistoryPage() {
     orders: [],
     message: '',
   });
-  const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
-    let ignore = false;
+    let stopped = false;
+    let refreshTimer;
+    let controller;
 
-    fetchTableOrders(tableId)
-      .then((data) => {
-        if (ignore) return;
+    const loadHistory = async () => {
+      if (stopped) return;
+
+      controller = new AbortController();
+      let timedOut = false;
+
+      const timeoutTimer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 15000);
+
+      try {
+        const data = await fetchTableOrders(tableId, {
+          signal: controller.signal,
+        });
+
+        if (stopped) return;
 
         setHistory({
           tableId,
@@ -62,36 +77,54 @@ function OrderHistoryPage() {
           orders: data.orders,
           message: '',
         });
-      })
-      .catch((error) => {
-        if (ignore) return;
+      } catch (error) {
+        if (stopped) return;
 
-        setHistory({
-          tableId,
-          status: 'error',
-          orders: [],
-          message: error.message,
+        const message = timedOut
+          ? '서버 응답이 늦어지고 있습니다. 잠시 후 다시 확인합니다.'
+          : error.message || '주문 내역을 불러오지 못했습니다.';
+
+        setHistory((previous) => {
+          // 자동 갱신에 실패해도 이미 조회한 주문 내역은 유지한다.
+          if (
+            previous.tableId === tableId &&
+            previous.status === 'success'
+          ) {
+            return {
+              ...previous,
+              message,
+            };
+          }
+
+          return {
+            tableId,
+            status: 'error',
+            orders: [],
+            message,
+          };
         });
-      });
+      } finally {
+        clearTimeout(timeoutTimer);
+
+        // 앞선 요청이 끝난 뒤 다음 요청을 예약한다.
+        if (!stopped) {
+          refreshTimer = setTimeout(loadHistory, 5000);
+        }
+      }
+    };
+
+    loadHistory();
 
     return () => {
-      ignore = true;
+      stopped = true;
+      clearTimeout(refreshTimer);
+      controller?.abort();
     };
-  }, [tableId, reloadCount]);
+  }, [tableId]);
 
   const isCurrentTable = history.tableId === tableId;
   const status = isCurrentTable ? history.status : 'loading';
   const orders = isCurrentTable ? history.orders : [];
-
-  const refreshHistory = () => {
-    setHistory({
-      tableId,
-      status: 'loading',
-      orders: [],
-      message: '',
-    });
-    setReloadCount((count) => count + 1);
-  };
 
   const totalPrice = orders.reduce(
     (sum, order) => sum + order.total_price,
@@ -119,7 +152,15 @@ function OrderHistoryPage() {
       )}
 
       {status === 'error' && (
-        <p role="alert">{history.message}</p>
+        <p role="alert">
+          {history.message} 잠시 후 자동으로 다시 시도합니다.
+        </p>
+      )}
+      
+      {status === 'success' && history.message && (
+        <p role="status">
+          {history.message} 현재 표시된 주문 내역은 마지막 조회 결과입니다.
+        </p>
       )}
 
       {status === 'success' && (orders.length === 0 ? (
