@@ -59,3 +59,21 @@ export async function createOrder(orderRequest, { timeoutMs = ORDER_TIMEOUT_MS }
     return null;
   }
 }
+
+export async function fetchTableOrders(tableId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/tables/${tableId}/orders`,
+  );
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const error = new Error(
+      body?.message || '주문 내역을 불러오지 못했습니다.',
+    );
+
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
