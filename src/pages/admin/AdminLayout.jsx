@@ -44,9 +44,7 @@ function AdminLayout() {
       <AdminSidebar adminId={adminId} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <div className="admin-body">
-        <p className="admin-dev-banner" role="note">
-          <strong>개발 진행 안내</strong> · 매출 화면은 임시 데이터를 사용하며 연동 예정입니다.
-        </p>
+
 
         {logoutError && <p className="admin-alert admin-layout__alert" role="alert">{logoutError}</p>}
 
