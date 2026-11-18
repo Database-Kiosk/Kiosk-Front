@@ -3,7 +3,7 @@ import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import MenuFormDialog from '../../components/admin/MenuFormDialog.jsx';
-import { fetchAdminMenus, saveMenu, setMenuActive } from '../../api/adminApi.js';
+import { describeAdminError, fetchAdminMenus, saveMenu, setMenuActive } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatPrice } from '../../utils/format.js';
 import { API_BASE_URL } from '../../config/env.js';
@@ -45,16 +45,25 @@ function AdminMenusPage() {
 
   // MOCK: both change the in-memory mock data only (see api/adminApi.js).
   const handleToggle = async (menu) => {
+    if (busyMenuId !== null) return;
+
     setBusyMenuId(menu.menu_id);
     setActionError('');
+
     try {
-      replaceMenu(await setMenuActive(menu.menu_id, menu.is_active !== 1));
-    } catch {
-      setActionError(`'${menu.menu_name}'의 판매 상태를 변경하지 못했습니다.`);
+      const savedMenu = await setMenuActive(menu.menu_id, menu.is_active !== 1);
+      replaceMenu(savedMenu);
+    } catch (error) {
+      setActionError(
+        describeAdminError(
+          error,
+          error.serverMessage || `'${menu.menu_name}'의 판매 상태를 변경하지 못했습니다.`,
+        ),
+      );
     } finally {
       setBusyMenuId(null);
     }
-  };
+};
 
   const handleSave = async (menu, imageFile) => {
     const savedMenu = await saveMenu(menu, imageFile);
@@ -155,7 +164,11 @@ function AdminMenusPage() {
                         <td>{categoryName(menu.category_id)}</td>
                         <td className="is-number">{formatPrice(menu.price)}</td>
                         <td className="admin-menus__options">
-                          {menu.options.length > 0 ? menu.options.map((option) => option.option_name).join(', ') : '-'}
+                          {menu.options.length > 0
+                            ? menu.options
+                                .map((option) => `${option.option_name} (+${formatPrice(option.additional_price)})`)
+                                .join(', ')
+                            : '-'}
                         </td>
                         <td>
                           <button
@@ -164,21 +177,22 @@ function AdminMenusPage() {
                             aria-checked={isActive}
                             aria-label={`${menu.menu_name} 판매 상태`}
                             className="admin-switch"
-                            disabled
-                            title="판매 상태 변경 기능은 아직 연결되지 않았습니다."
+                            disabled={busyMenuId !== null}
                             onClick={() => handleToggle(menu)}
                           >
                             <span className="admin-switch__track" aria-hidden="true" />
-                            {isActive ? '판매 중' : '판매 중지'}
+                            {busyMenuId === menu.menu_id ? '변경 중…' : isActive ? '판매 중' : '판매 중지'}
                           </button>
                         </td>
                         <td className="is-number">
                           <button
                             type="button"
                             className="admin-btn admin-btn--secondary"
-                            disabled
-                            title="메뉴 수정 기능은 아직 연결되지 않았습니다."
-                            onClick={() => setDialog({ menu })}
+                            disabled={busyMenuId === menu.menu_id}
+                            onClick={() => {
+                              setActionError('');
+                              setDialog({ menu });
+                            }}
                           >
                             수정
                           </button>

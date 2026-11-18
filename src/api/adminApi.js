@@ -152,9 +152,20 @@ const nextId = (rows, key) => Math.max(0, ...rows.map((row) => row[key])) + 1;
 // - past orders keep their saved prices (orderoption.extra_price), but show the current option name.
 export function saveMenu(menu, imageFile = null) {
   if (menu.menu_id != null) {
-    return Promise.reject(
-      new Error('메뉴 수정 기능은 아직 연결되지 않았습니다.'),
-    );
+    return adminRequest(`/api/admin/menus/${encodeURIComponent(menu.menu_id)}`, {
+      method: 'PATCH',
+      body: {
+        menu_name: menu.menu_name,
+        price: menu.price,
+        category_id: menu.category_id,
+        description: menu.description,
+        options: menu.options.map((option) => ({
+          option_id: option.option_id,
+          option_name: option.option_name,
+          additional_price: option.additional_price,
+        })),
+      },
+    });
   }
 
   const formData = new FormData();
@@ -184,11 +195,11 @@ export function saveMenu(menu, imageFile = null) {
 }
 
 export function setMenuActive(menuId, isActive) {
-  return respond(() => {
-    const menu = state.menus.find((item) => item.menu_id === menuId);
-    if (!menu) throw mockError('존재하지 않는 메뉴입니다.', 404);
-    menu.is_active = isActive ? 1 : 0;
-    return menu;
+  return adminRequest(`/api/admin/menus/${encodeURIComponent(menuId)}/status`, {
+    method: 'PATCH',
+    body: {
+      is_active: isActive ? 1 : 0,
+    },
   });
 }
 

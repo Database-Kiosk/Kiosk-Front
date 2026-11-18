@@ -184,6 +184,7 @@ const handleImageChange = (event) => {
         </header>
 
         <div className="admin-dialog__body">
+          {!isEdit && (
           <div className="admin-field">
             <label
               className="admin-field__label"
@@ -230,6 +231,7 @@ const handleImageChange = (event) => {
               />
             )}
           </div>
+          )}
           <div className="admin-field">
             <label className="admin-field__label" htmlFor="menu-form-menu_name">메뉴 이름</label>
             <input
@@ -296,14 +298,25 @@ const handleImageChange = (event) => {
                     value={option.additional_price}
                     onChange={(e) => updateOption(index, 'additional_price', e.target.value)}
                   />
-                  <button type="button" className="admin-btn admin-btn--danger" onClick={() => removeOption(index)}>
-                    삭제
-                  </button>
+                  {!isEdit && (
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn--danger"
+                      onClick={() => removeOption(index)}
+                    >
+                      삭제
+                    </button>
+                  )}
                 </div>
                 {errors[`option-${index}`] && <p className="admin-field__error">{errors[`option-${index}`]}</p>}
               </div>
             ))}
-            <button type="button" className="admin-btn admin-btn--secondary" onClick={addOption}>+ 옵션 추가</button>
+            {!isEdit && (
+              <button type="button" className="admin-btn admin-btn--secondary" onClick={addOption}>
+                + 옵션 추가
+              </button>
+            )}
+            
           </fieldset>
 
           <label className="admin-dialog__check">
