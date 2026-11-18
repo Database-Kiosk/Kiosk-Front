@@ -3,10 +3,11 @@ import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import SummaryCard from '../../components/admin/SummaryCard.jsx';
-import { fetchSalesReport } from '../../api/adminApi.js';
+import { describeAdminError, fetchSalesReport } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatPrice } from '../../utils/format.js';
-import { formatDayLabel } from '../../utils/dateTime.js';
+import { formatDayLabel, toDbDate } from '../../utils/dateTime.js';
+
 import './AdminSalesPage.css';
 
 // Sales basis for this design: sum of all order totals (temporary; decided with the backend API).
@@ -14,7 +15,10 @@ const PERIODS = [
   { value: 'today', label: '오늘' },
   { value: 'week', label: '최근 7일' },
   { value: 'month', label: '최근 30일' },
+  { value: 'calendarMonth', label: '월별' },
 ];
+
+const MONTH_PATTERN = /^[1-9]\d{3}-(0[1-9]|1[0-2])$/;
 
 const numberFormatter = new Intl.NumberFormat('ko-KR');
 
@@ -29,22 +33,83 @@ function RatioBar({ ratio }) {
 
 function AdminSalesPage() {
   const [period, setPeriod] = useState('today');
-  const { status, data: report, retry } = useAdminData(fetchSalesReport, period);
+  const [selectedMonth, setSelectedMonth] = useState(
+    () => toDbDate(new Date()).slice(0, 7),
+  );
+  const [monthInput, setMonthInput] = useState(selectedMonth);
+
+  const isCalendarMonth = period === 'calendarMonth';
+  const query = isCalendarMonth ? selectedMonth : period;
+  const { status, data: report, error, retry } = useAdminData(fetchSalesReport, query);
 
   const summary = report?.summary;
   const maxDaily = Math.max(1, ...(report?.daily.map((day) => day.total_sales) ?? []));
-  const periodLabel = PERIODS.find((item) => item.value === period).label;
+
+  const periodLabel = isCalendarMonth
+    ? `${selectedMonth.slice(0, 4)}년 ${Number(selectedMonth.slice(5))}월`
+    : PERIODS.find((item) => item.value === period).label;
+
+  const canSearchMonth = MONTH_PATTERN.test(monthInput) && monthInput !== '9999-12';
+
+  function handleMonthSubmit(event) {
+    event.preventDefault();
+    if (!canSearchMonth) return;
+
+    if (monthInput === selectedMonth) {
+      retry();
+      return;
+    }
+
+    setSelectedMonth(monthInput);
+  }
 
   return (
     <>
-      <AdminPageHeader title="매출 조회" description="매출 기준: 전체 주문 금액 합계 (임시 기준, 백엔드 구현 시 확정)">
-        <AdminTabs label="조회 기간" options={PERIODS} value={period} onChange={setPeriod} />
+      <AdminPageHeader title="매출 조회" description="조회 기간 내 전체 주문 금액을 집계합니다.">
+        <div className="admin-sales__filters">
+          <AdminTabs
+            label="조회 기간"
+            options={PERIODS}
+            value={period}
+            onChange={setPeriod}
+          />
+
+          {isCalendarMonth && (
+            <form className="admin-sales__month-form" onSubmit={handleMonthSubmit}>
+              <label htmlFor="sales-month">기준 월</label>
+              <input
+                id="sales-month"
+                type="month"
+                placeholder="YYYY-MM"
+                value={monthInput}
+                onChange={(event) => setMonthInput(event.target.value)}
+                required
+              />
+              <button type="submit" disabled={!canSearchMonth}>
+                조회
+              </button>
+            </form>
+          )}
+        </div>
       </AdminPageHeader>
 
-      {status === 'loading' && <AdminStateView status="loading" message="매출을 불러오는 중입니다…" />}
-      {status === 'error' && <AdminStateView status="error" message="매출을 불러오지 못했습니다." onRetry={retry} />}
+      {status === 'loading' && (
+        <AdminStateView status="loading" message="매출을 불러오는 중입니다…" />
+      )}
+
+      {status === 'error' && (
+        <AdminStateView
+          status="error"
+          message={describeAdminError(error, '매출을 불러오지 못했습니다.')}
+          onRetry={retry}
+        />
+      )}
+
       {status === 'success' && summary.order_count === 0 && (
-        <AdminStateView status="empty" message={`${periodLabel} 동안의 주문이 없습니다.`} />
+        <AdminStateView
+          status="empty"
+          message={`조회 기간(${periodLabel})에 저장된 주문이 없습니다.`}
+        />
       )}
 
       {status === 'success' && summary.order_count > 0 && (

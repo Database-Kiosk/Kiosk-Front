@@ -1,5 +1,90 @@
 /* Admin sales report */
 
+/* 기간 탭이 제목 아래에서 항상 같은 위치에 있도록 한다. */
+.admin-page-header__actions:has(> .admin-sales__filters) {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.admin-sales__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.admin-sales__filters > .admin-tabs {
+  flex: 0 0 auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 월별 조회 필터 */
+.admin-sales__month-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.admin-sales__month-form label {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-sales__month-form input,
+.admin-sales__month-form button {
+  min-height: 38px;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--font-size-sm);
+}
+
+.admin-sales__month-form input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.admin-sales__month-form button {
+  padding-inline: var(--space-3);
+  border: 1px solid transparent;
+  background: #e7e9ed;
+  color: var(--color-text);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-sales__month-form button:hover:not(:disabled) {
+  background: #d5d8de;
+}
+
+.admin-sales__month-form button:disabled {
+  background: var(--color-surface);
+  color: var(--color-muted);
+  cursor: default;
+}
+
+.admin-sales__month-form :is(input, button):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 일자별·메뉴별 매출 표 */
 .admin-sales__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -37,9 +122,21 @@
   font-size: 0.75rem;
 }
 
-/* Tablet: tables stacked */
+/* 태블릿에서는 매출 표를 세로로 배치한다. */
 @media (max-width: 1199px) {
   .admin-sales__grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 모바일에서는 월별 조회 폼을 탭 아래에 배치한다. */
+@media (max-width: 480px) {
+  .admin-sales__month-form {
+    flex-basis: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-sales__month-form label {
+    grid-column: 1 / -1;
   }
 }

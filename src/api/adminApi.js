@@ -206,10 +206,14 @@ export function setMenuActive(menuId, isActive) {
 /* ---------- Sales ---------- */
 
 // period: 'today' | 'week' | 'month'
-export function fetchSalesReport(period) {
-  const days = SALES_PERIOD_DAYS[period] ?? 1;
-  return respond(
-    () => buildSalesReport(state, days),
-    buildSalesReport({ ...state, orders: [], pastSales: [] }, days),
-  );
+export function fetchSalesReport(query = 'today') {
+  const params = new URLSearchParams();
+
+  if (/^\d{4}-\d{2}$/.test(query)) {
+    params.set('month', query);
+  } else {
+    params.set('period', query);
+  }
+
+  return adminRequest(`/api/admin/sales?${params.toString()}`);
 }
