@@ -45,9 +45,7 @@ function AdminLayout() {
 
       <div className="admin-body">
         <p className="admin-dev-banner" role="note">
-          <strong>개발 진행 안내</strong> · 주문 관리, 테이블 조회 및 이용 종료,
-          메뉴 조회·등록은 실제 서버와 연동됩니다.
-          매출 화면은 임시 데이터를 사용하며, 메뉴 수정·판매 상태 변경은 연동 예정입니다.
+          <strong>개발 진행 안내</strong> · 매출 화면은 임시 데이터를 사용하며 연동 예정입니다.
         </p>
 
         {logoutError && <p className="admin-alert admin-layout__alert" role="alert">{logoutError}</p>}
