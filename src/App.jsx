@@ -33,7 +33,7 @@ function App() {
       </Route>
 
       {/* Admin: real login (Kiosk-Server cookie); every page except /admin/login needs it (RequireAdmin).
-          Orders use the real API; the table, menu and sales screens' data is still mock (api/adminApi.js). */}
+          Every admin screen uses the real Kiosk-Server API (api/adminApi.js). */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>

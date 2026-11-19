@@ -268,7 +268,7 @@ textarea.admin-input {
   font-size: 0.8125rem;
 }
 
-/* Action error (mock change failed) */
+/* Action error (a change could not be saved) */
 .admin-alert {
   margin: 0 0 var(--space-4);
   padding: var(--space-3) var(--space-4);

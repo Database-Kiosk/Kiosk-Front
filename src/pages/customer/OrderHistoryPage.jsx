@@ -80,9 +80,16 @@ function OrderHistoryPage() {
       } catch (error) {
         if (stopped) return;
 
-        const message = timedOut
-          ? '서버 응답이 늦어지고 있습니다. 잠시 후 다시 확인합니다.'
-          : error.message || '주문 내역을 불러오지 못했습니다.';
+        // No status: the request got no answer (network error), so the browser's own English
+        // message (e.g. "Failed to fetch") is not shown. A server answer keeps its message.
+        let message;
+        if (timedOut) {
+          message = '서버 응답이 늦어지고 있습니다. 잠시 후 다시 확인합니다.';
+        } else if (error.status === undefined) {
+          message = '서버에 연결하지 못했습니다.';
+        } else {
+          message = error.message || '주문 내역을 불러오지 못했습니다.';
+        }
 
         setHistory((previous) => {
           // 자동 갱신에 실패해도 이미 조회한 주문 내역은 유지한다.

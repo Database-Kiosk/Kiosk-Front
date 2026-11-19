@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
+import AdminLoadError from '../../components/admin/AdminLoadError.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import StatusBadge from '../../components/admin/StatusBadge.jsx';
 import SummaryCard from '../../components/admin/SummaryCard.jsx';
@@ -70,7 +71,7 @@ function TablePopup({
 }
 
 function AdminTablesPage() {
-  const { status, data: tables, retry, setData } = useAdminData(fetchAdminTables);
+  const { status, data: tables, error, retry, setData } = useAdminData(fetchAdminTables);
   const [filter, setFilter] = useState('all');
   const [busyTableId, setBusyTableId] = useState(null);
   const [now, setNow] = useState(() => new Date());
@@ -83,55 +84,55 @@ function AdminTablesPage() {
     return () => clearInterval(timer);
   }, []);
 
-// 이용 완료 버튼을 누르면 확인 팝업 표시
-const handleClose = (table) => {
-  if (busyTableId !== null || !table.session) return;
+  // 이용 완료 버튼을 누르면 확인 팝업 표시
+  const handleClose = (table) => {
+    if (busyTableId !== null || !table.session) return;
 
-  setConfirmTable(table);
-};
+    setConfirmTable(table);
+  };
 
-// 팝업에서 확인을 누르면 실제 API 호출
-const handleConfirmClose = async () => {
-  if (!confirmTable || busyTableId !== null) return;
+  // 팝업에서 확인을 누르면 실제 API 호출
+  const handleConfirmClose = async () => {
+    if (!confirmTable || busyTableId !== null) return;
 
-  const table = confirmTable;
+    const table = confirmTable;
 
-  setConfirmTable(null);
-  setBusyTableId(table.table_id);
+    setConfirmTable(null);
+    setBusyTableId(table.table_id);
 
-  try {
-    const updated = await closeTableSession(table.table_id);
+    try {
+      const updated = await closeTableSession(table.table_id);
 
-    setData((list) =>
-      list.map((item) =>
-        item.table_id === updated.table_id ? updated : item,
-      ),
-    );
+      setData((list) =>
+        list.map((item) =>
+          item.table_id === updated.table_id ? updated : item,
+        ),
+      );
 
-    setSelectedTableId((current) =>
-      current === table.table_id ? null : current,
-    );
+      setSelectedTableId((current) =>
+        current === table.table_id ? null : current,
+      );
 
-    setNotice(`테이블 ${table.table_id}번의 이용이 종료되었습니다.`);
-  } catch (error) {
-    const fallback = '테이블 이용을 종료하지 못했습니다.';
+      setNotice(`테이블 ${table.table_id}번의 이용이 종료되었습니다.`);
+    } catch (error) {
+      const fallback = '테이블 이용을 종료하지 못했습니다.';
 
-    const message =
-      error.status >= 400 &&
-      error.status < 500 &&
-      error.status !== 401
-        ? error.serverMessage || fallback
-        : describeAdminError(error, fallback);
+      const message =
+        error.status >= 400 &&
+        error.status < 500 &&
+        error.status !== 401
+          ? error.serverMessage || fallback
+          : describeAdminError(error, fallback);
 
-    setNotice(
-      error.status === undefined
-        ? `${message} 목록을 새로고침해 처리 결과를 확인해 주세요.`
-        : message,
-    );
-  } finally {
-    setBusyTableId(null);
-  }
-};
+      setNotice(
+        error.status === undefined
+          ? `${message} 목록을 새로고침해 처리 결과를 확인해 주세요.`
+          : message,
+      );
+    } finally {
+      setBusyTableId(null);
+    }
+  };
 
   const inUse = tables?.filter((table) => table.table_status === '이용 중') ?? [];
   const visibleTables = tables?.filter((table) => filter === 'all' || table.table_status === filter) ?? [];
@@ -150,7 +151,7 @@ const handleConfirmClose = async () => {
       </AdminPageHeader>
 
       {status === 'loading' && <AdminStateView status="loading" message="테이블 정보를 불러오는 중입니다…" />}
-      {status === 'error' && <AdminStateView status="error" message="테이블 정보를 불러오지 못했습니다." onRetry={retry} />}
+      {status === 'error' && <AdminLoadError error={error} fallback="테이블 정보를 불러오지 못했습니다." onRetry={retry} />}
       {status === 'success' && tables.length === 0 && (
         <AdminStateView status="empty" message="등록된 테이블이 없습니다." />
       )}

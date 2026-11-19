@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
+import AdminLoadError from '../../components/admin/AdminLoadError.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import MenuFormDialog from '../../components/admin/MenuFormDialog.jsx';
 import { describeAdminError, fetchAdminMenus, saveMenu, setMenuActive } from '../../api/adminApi.js';
@@ -12,7 +13,7 @@ import './AdminMenusPage.css';
 // Menu list for admins: menus off sale are listed too. There is no delete button on purpose:
 // orderdetail rows reference menu (FK), so a menu is taken off sale (is_active = 0) instead.
 function AdminMenusPage() {
-  const { status, data, retry, setData } = useAdminData(fetchAdminMenus);
+  const { status, data, error, retry, setData } = useAdminData(fetchAdminMenus);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [keyword, setKeyword] = useState('');
   // null: closed, { menu: null }: add, { menu }: edit
@@ -43,7 +44,7 @@ function AdminMenusPage() {
       };
     });
 
-  // MOCK: both change the in-memory mock data only (see api/adminApi.js).
+  // Both save on the server (api/adminApi.js) and show the menu the server returned.
   const handleToggle = async (menu) => {
     if (busyMenuId !== null) return;
 
@@ -87,7 +88,7 @@ function AdminMenusPage() {
       {actionError && <p className="admin-alert" role="alert">{actionError}</p>}
 
       {status === 'loading' && <AdminStateView status="loading" message="메뉴를 불러오는 중입니다…" />}
-      {status === 'error' && <AdminStateView status="error" message="메뉴를 불러오지 못했습니다." onRetry={retry} />}
+      {status === 'error' && <AdminLoadError error={error} fallback="메뉴를 불러오지 못했습니다." onRetry={retry} />}
       {status === 'success' && menus.length === 0 && (
         <AdminStateView status="empty" message="등록된 메뉴가 없습니다.">{addButton}</AdminStateView>
       )}

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './MenuFormDialog.css';
 
-// Menu add / edit dialog (design only: saving goes to the mock API, nothing reaches the server).
-// Image upload is not part of this issue (no upload API yet), so image_url is not edited here.
+// Menu add / edit dialog. Saving goes through onSave (AdminMenusPage → saveMenu in api/adminApi.js).
+// A photo can be chosen only when adding a menu; editing keeps the current image.
 // Limits follow DB/schema.sql: menu_name / option_name VARCHAR(100), prices INT ≥ 0.
 const NAME_MAX_LENGTH = 100;
 const PRICE_MAX = 2147483647;
@@ -319,10 +319,14 @@ const handleImageChange = (event) => {
             
           </fieldset>
 
-          <label className="admin-dialog__check">
-            <input type="checkbox" checked={draft.is_active} onChange={(e) => update('is_active', e.target.checked)} />
-            판매 중으로 표시
-          </label>
+          {/* Add only: editing saves through PATCH /api/admin/menus/:menuId, which does not take is_active.
+              The sale status of an existing menu is changed with the switch in the menu list. */}
+          {!isEdit && (
+            <label className="admin-dialog__check">
+              <input type="checkbox" checked={draft.is_active} onChange={(e) => update('is_active', e.target.checked)} />
+              판매 중으로 표시
+            </label>
+          )}
 
           {saveError && <p className="admin-alert" role="alert">{saveError}</p>}
         </div>

@@ -7,24 +7,15 @@ import {
 import { useAdminData } from '../../hooks/useAdminData.js';
 import StatusBadge from './StatusBadge.jsx';
 import { formatPrice } from '../../utils/format.js';
+import { formatDateTime, parseDbDateTime } from '../../utils/dateTime.js';
 import './AdminTableDetailDialog.css';
 
 
 
+// '2026-11-19 12:30:05' → '11월 19일 (목) 12:30'. Parsed by the shared helper (new Date() does not parse
+// this format the same way in every browser). No or invalid date → '—' as before.
 function formatDate(value) {
-  if (!value) return '—';
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-
-  return new Intl.DateTimeFormat('ko-KR', {
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date);
+  return parseDbDateTime(value) ? formatDateTime(value) : '—';
 }
 
 function AdminTableDetailDialog({ tableId, table, onClose }) {
@@ -57,7 +48,7 @@ function AdminTableDetailDialog({ tableId, table, onClose }) {
   }, []);
 
   const orders = history?.orders ?? [];
-  const session = history?.session ?? table?.session;
+  const session = table?.session;
   const tableStatus =
     table?.table_status ?? (session ? '이용 중' : '이용 가능');
   const totalPrice = history?.total_price ?? 0;

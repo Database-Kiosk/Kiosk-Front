@@ -18,11 +18,6 @@ export function toDbDate(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-// Date -> 'YYYY-MM-DD HH:mm:ss'
-export function toDbDateTime(date) {
-  return `${toDbDate(date)} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
-
 // For the <time dateTime> attribute: 'YYYY-MM-DD HH:mm:ss' -> 'YYYY-MM-DDTHH:mm:ss'
 export const toDateTimeAttr = (value) => (value ?? '').replace(' ', 'T');
 

@@ -6,8 +6,7 @@ import './admin.css';
 
 // Shared layout for /admin/orders, /admin/tables, /admin/menus, /admin/sales.
 // Rendered by RequireAdmin only after the login was confirmed; { adminId } comes from its outlet context.
-// Login, logout and the order screen use the real Kiosk-Server API; the table, menu and sales screens'
-// data is still mock (api/adminApi.js).
+// Logout and every admin screen use the real Kiosk-Server API (api/adminAuthApi.js, api/adminApi.js).
 function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();

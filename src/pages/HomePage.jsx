@@ -16,7 +16,7 @@ function HomePage() {
           <Link to="/admin/login">/admin/login</Link> — 관리자 로그인 페이지
         </li>
         <li>
-          <Link to="/admin/orders">/admin/orders</Link> — 관리자 화면 (mock 데이터)
+          <Link to="/admin/orders">/admin/orders</Link> — 관리자 화면
         </li>
       </ul>
 
