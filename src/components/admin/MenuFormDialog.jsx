@@ -319,10 +319,14 @@ const handleImageChange = (event) => {
             
           </fieldset>
 
-          <label className="admin-dialog__check">
-            <input type="checkbox" checked={draft.is_active} onChange={(e) => update('is_active', e.target.checked)} />
-            판매 중으로 표시
-          </label>
+          {/* Add only: editing saves through PATCH /api/admin/menus/:menuId, which does not take is_active.
+              The sale status of an existing menu is changed with the switch in the menu list. */}
+          {!isEdit && (
+            <label className="admin-dialog__check">
+              <input type="checkbox" checked={draft.is_active} onChange={(e) => update('is_active', e.target.checked)} />
+              판매 중으로 표시
+            </label>
+          )}
 
           {saveError && <p className="admin-alert" role="alert">{saveError}</p>}
         </div>
