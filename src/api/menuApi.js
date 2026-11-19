@@ -17,7 +17,7 @@ async function getJson(path) {
   return response.json();
 }
 
-// The server stores images in its own folder and returns paths like "/uploads/...".
+// The server stores images in its own folder and returns paths like "/images/menus/{uuid}.webp".
 // Resolve them against the API server (not this page's origin). Full URLs stay as they are; null stays null.
 function resolveImageUrl(imageUrl) {
   if (typeof imageUrl !== 'string' || imageUrl === '') return null;

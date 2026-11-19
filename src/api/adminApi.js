@@ -1,63 +1,9 @@
-// Admin screen data.
-// - Orders: real Kiosk-Server API (Front #11), sent with the admin login cookie through adminRequest
-//   (adminAuthApi.js: same timeout and errors as login). Never mixed with the mock data below.
-// - Tables, menus, sales: MOCK ONLY (Front #9). Nothing is sent to Kiosk-Server and nothing is saved:
-//   changes live in this module's memory and are lost on a page reload. Each function keeps the shape
-//   a real API call would have (async, snake_case fields, Error with `status`).
-// Login/logout are real and live in adminAuthApi.js.
-//
-// Dev only (after logging in): add ?preview=loading|empty|error to an admin URL to check those screen
-// states. It applies to the mock functions only (not to the order screen).
+// Admin screen data: orders, tables, menus and sales from the real Kiosk-Server API.
+// Every request goes through adminRequest (adminAuthApi.js), which sends the admin login cookie and
+// uses the same timeout and errors as login. Login/logout live in adminAuthApi.js.
 import { adminRequest } from './adminAuthApi.js';
-import { createAdminMockState } from '../mocks/adminMockData.js';
-import { buildSalesReport, createPastSales } from '../mocks/adminSalesMock.js';
-import { toDbDateTime } from '../utils/dateTime.js';
 
-const MOCK_DELAY_MS = 400;
-export const SALES_PERIOD_DAYS = { today: 1, week: 7, month: 30 };
-
-function createState() {
-  const now = new Date();
-  const state = createAdminMockState(now);
-  return { ...state, pastSales: createPastSales(state.menus, now) };
-}
-
-// Reset on every page load (module evaluated again).
-const state = createState();
-
-function getPreview() {
-  if (!import.meta.env.DEV) return null;
-  const value = new URLSearchParams(window.location.search).get('preview');
-  return ['loading', 'empty', 'error'].includes(value) ? value : null;
-}
-
-function mockError(message, status = 500) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
-
-// Resolves with a copy (screens must not change the mock state directly) after a short delay.
-function respond(makeData, emptyData) {
-  const preview = getPreview();
-  if (preview === 'loading') return new Promise(() => {});
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (preview === 'error') {
-        reject(mockError('Mock request failed (preview=error)'));
-        return;
-      }
-      // A throw inside a timer callback would not reach this Promise (it would hang), so pass it on.
-      try {
-        resolve(structuredClone(preview === 'empty' && emptyData !== undefined ? emptyData : makeData()));
-      } catch (error) {
-        reject(error);
-      }
-    }, MOCK_DELAY_MS);
-  });
-}
-
-/* ---------- Orders (real API) ---------- */
+/* ---------- Orders ---------- */
 
 // orders.order_status ENUM values (Kiosk-Server DB/schema.sql), in the order a status moves forward.
 export const ORDER_STATUSES = ['접수', '조리 중', '전달 완료'];
@@ -96,22 +42,6 @@ export function updateOrderStatus(orderId, nextStatus) {
 
 /* ---------- Tables ---------- */
 
-function summarizeTable(table) {
-  const session = state.sessions.find((item) => item.table_id === table.table_id && item.ended_at === null);
-  if (!session) return { ...table, session: null };
-  const orders = state.orders.filter((order) => order.session_id === session.session_id);
-  return {
-    ...table,
-    session: {
-      session_id: session.session_id,
-      started_at: session.started_at,
-      order_count: orders.length,
-      pending_count: orders.filter((order) => order.order_status !== '전달 완료').length,
-      total_price: orders.reduce((sum, order) => sum + order.total_price, 0),
-    },
-  };
-}
-
 export function fetchAdminTables() {
   return adminRequest('/api/admin/tables');
 }
@@ -139,17 +69,10 @@ export function fetchAdminMenus() {
   return adminRequest('/api/admin/menus');
 }
 
-const nextId = (rows, key) => Math.max(0, ...rows.map((row) => row[key])) + 1;
-
-// Creates (no menu_id) or updates a menu with its options (MOCK).
-// Options: an option with option_id keeps it, one without gets a new ID, one left out is removed.
-// Mock-only shortcut: a new ID is "current max + 1", so the ID of a removed option can be given again.
-// For the real API:
-// - option IDs come from the DB (AUTO_INCREMENT); the server must check that each sent option_id
-//   belongs to this menu.
-// - orderoption references menu_option (FK), so an option that was ordered cannot simply be deleted;
-//   the schema has no "inactive" flag for options, so the deletion rule must be decided with the backend.
-// - past orders keep their saved prices (orderoption.extra_price), but show the current option name.
+// No menu_id: POST /api/admin/menus (multipart: `data` = menu JSON, optional `image` file).
+// With menu_id: PATCH /api/admin/menus/:menuId (JSON: menu fields and the existing options only;
+// is_active and the image are not sent — the server does not accept them on this route).
+// Both resolve with the saved menu returned by the server.
 export function saveMenu(menu, imageFile = null) {
   if (menu.menu_id != null) {
     return adminRequest(`/api/admin/menus/${encodeURIComponent(menu.menu_id)}`, {
@@ -205,7 +128,7 @@ export function setMenuActive(menuId, isActive) {
 
 /* ---------- Sales ---------- */
 
-// period: 'today' | 'week' | 'month'
+// query: 'today' | 'week' | 'month' (sent as ?period=) or 'YYYY-MM' (sent as ?month=)
 export function fetchSalesReport(query = 'today') {
   const params = new URLSearchParams();
 

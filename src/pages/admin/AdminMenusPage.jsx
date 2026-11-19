@@ -43,7 +43,7 @@ function AdminMenusPage() {
       };
     });
 
-  // MOCK: both change the in-memory mock data only (see api/adminApi.js).
+  // Both save on the server (api/adminApi.js) and show the menu the server returned.
   const handleToggle = async (menu) => {
     if (busyMenuId !== null) return;
 

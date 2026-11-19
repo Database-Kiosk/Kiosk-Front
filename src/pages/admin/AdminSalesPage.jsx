@@ -10,7 +10,7 @@ import { formatDayLabel, toDbDate } from '../../utils/dateTime.js';
 
 import './AdminSalesPage.css';
 
-// Sales basis for this design: sum of all order totals (temporary; decided with the backend API).
+// Sales are computed by the server (GET /api/admin/sales): sum of the order totals in the period.
 const PERIODS = [
   { value: 'today', label: '오늘' },
   { value: 'week', label: '최근 7일' },
