@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
+import AdminLoadError, { AdminLoginLink } from '../../components/admin/AdminLoadError.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import AdminOrderCard from '../../components/admin/AdminOrderCard.jsx';
 import AdminOrderDetailDialog from '../../components/admin/AdminOrderDetailDialog.jsx';
@@ -40,7 +40,6 @@ function describeAdvanceError(error, orderId) {
 }
 
 function AdminOrdersPage() {
-  const location = useLocation();
   const { status, data: orders, error, retry, setData } = useAdminData(fetchAdminOrders);
   const [filter, setFilter] = useState('all');
   const [tableFilter, setTableFilter] = useState('all'); // 'all' or a table_id as a string (<select> value)
@@ -85,12 +84,6 @@ function AdminOrdersPage() {
     }
   };
 
-  const loginLink = (
-    <Link to="/admin/login" replace state={{ from: location }} className="admin-btn admin-btn--primary">
-      로그인 화면으로
-    </Link>
-  );
-
   // Table filter: tables that have orders in the list (+ the selected one, so the <select> keeps its value).
   const tableIds = [...new Set([
     ...(orders ?? []).map((order) => order.table_id),
@@ -115,20 +108,12 @@ function AdminOrdersPage() {
       {actionError && (
         <div className="admin-alert admin-orders__alert" role="alert">
           <p>{actionError.message}</p>
-          {actionError.loginExpired && loginLink}
+          {actionError.loginExpired && <AdminLoginLink />}
         </div>
       )}
 
       {status === 'loading' && <AdminStateView status="loading" message="주문을 불러오는 중입니다…" />}
-      {status === 'error' && (error?.status === 401 ? (
-        <AdminStateView status="error" message={describeAdminError(error)}>{loginLink}</AdminStateView>
-      ) : (
-        <AdminStateView
-          status="error"
-          message={describeAdminError(error, '주문을 불러오지 못했습니다.')}
-          onRetry={retry}
-        />
-      ))}
+      {status === 'error' && <AdminLoadError error={error} fallback="주문을 불러오지 못했습니다." onRetry={retry} />}
       {status === 'success' && orders.length === 0 && (
         <AdminStateView status="empty" message="아직 들어온 주문이 없습니다." />
       )}

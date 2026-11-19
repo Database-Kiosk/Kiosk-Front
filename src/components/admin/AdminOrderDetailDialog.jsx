@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import AdminStateView from './AdminStateView.jsx';
+import AdminLoadError from './AdminLoadError.jsx';
 import StatusBadge from './StatusBadge.jsx';
-import { describeAdminError, fetchAdminOrderById } from '../../api/adminApi.js';
+import { fetchAdminOrderById } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatOptionPrice, formatPrice } from '../../utils/format.js';
 import { formatDateTime, toDateTimeAttr } from '../../utils/dateTime.js';
@@ -17,7 +17,6 @@ const getUnitTotal = (item) => item.options.reduce((sum, option) => sum + option
 // this orderId, so the data of a previously opened order is never shown here.
 function AdminOrderDetailDialog({ orderId, onClose }) {
   const dialogRef = useRef(null);
-  const location = useLocation();
   const { status, data: order, error, retry } = useAdminData(fetchAdminOrderById, orderId);
 
   // Native modal dialog: focus stays inside, Esc closes (handled by onCancel below).
@@ -31,22 +30,9 @@ function AdminOrderDetailDialog({ orderId, onClose }) {
     content = <AdminStateView status="loading" message="주문 정보를 불러오는 중입니다…" />;
   } else if (status === 'error' && error?.status === 404) {
     content = <AdminStateView status="empty" message="존재하지 않는 주문입니다." />;
-  } else if (status === 'error' && error?.status === 401) {
-    content = (
-      <AdminStateView status="error" message={describeAdminError(error)}>
-        <Link to="/admin/login" replace state={{ from: location }} className="admin-btn admin-btn--primary">
-          로그인 화면으로
-        </Link>
-      </AdminStateView>
-    );
   } else if (status === 'error') {
-    content = (
-      <AdminStateView
-        status="error"
-        message={describeAdminError(error, '주문 정보를 불러오지 못했습니다.')}
-        onRetry={retry}
-      />
-    );
+    // 401 → login link; anything else → message + retry.
+    content = <AdminLoadError error={error} fallback="주문 정보를 불러오지 못했습니다." onRetry={retry} />;
   } else {
     const { session } = order;
     content = (

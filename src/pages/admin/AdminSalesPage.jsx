@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStateView from '../../components/admin/AdminStateView.jsx';
+import AdminLoadError from '../../components/admin/AdminLoadError.jsx';
 import AdminTabs from '../../components/admin/AdminTabs.jsx';
 import SummaryCard from '../../components/admin/SummaryCard.jsx';
-import { describeAdminError, fetchSalesReport } from '../../api/adminApi.js';
+import { fetchSalesReport } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
 import { formatPrice } from '../../utils/format.js';
 import { formatDayLabel, toDbDate } from '../../utils/dateTime.js';
@@ -97,13 +98,7 @@ function AdminSalesPage() {
         <AdminStateView status="loading" message="매출을 불러오는 중입니다…" />
       )}
 
-      {status === 'error' && (
-        <AdminStateView
-          status="error"
-          message={describeAdminError(error, '매출을 불러오지 못했습니다.')}
-          onRetry={retry}
-        />
-      )}
+      {status === 'error' && <AdminLoadError error={error} fallback="매출을 불러오지 못했습니다." onRetry={retry} />}
 
       {status === 'success' && summary.order_count === 0 && (
         <AdminStateView
