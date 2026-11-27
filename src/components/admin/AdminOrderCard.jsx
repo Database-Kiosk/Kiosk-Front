@@ -10,7 +10,7 @@ const NEXT_STEP = {
 
 // One order on the admin order board. `now` refreshes the elapsed time (and decides what "today" is:
 // orders of another day also show their date).
-function AdminOrderCard({ order, now, isBusy, onAdvance, onOpenDetail }) {
+function AdminOrderCard({ order, orderLabel = `주문 #${order.order_id}`, now, isBusy, onAdvance, onOpenDetail }) {
   const nextStep = NEXT_STEP[order.order_status];
   const isDone = !nextStep;
 
@@ -19,7 +19,7 @@ function AdminOrderCard({ order, now, isBusy, onAdvance, onOpenDetail }) {
       <header className="admin-order-card__head">
         <div>
           <p className="admin-order-card__table">테이블 {order.table_id}</p>
-          <p className="admin-order-card__id">주문 #{order.order_id}</p>
+          <p className="admin-order-card__id">{orderLabel}</p>
         </div>
         <div className="admin-order-card__time">
           <time dateTime={toDateTimeAttr(order.order_time)}>{formatOrderTime(order.order_time, now)}</time>
@@ -52,7 +52,7 @@ function AdminOrderCard({ order, now, isBusy, onAdvance, onOpenDetail }) {
           <button
             type="button"
             className="admin-btn admin-btn--secondary admin-order-card__detail"
-            aria-label={`주문 #${order.order_id} 상세 보기`}
+            aria-label={`${orderLabel} 상세 보기`}
             disabled={isBusy}
             onClick={() => onOpenDetail(order.order_id)}
           >

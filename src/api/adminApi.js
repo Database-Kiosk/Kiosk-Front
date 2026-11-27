@@ -20,8 +20,15 @@ export function describeAdminError(error, fallback) {
 // [{ order_id, session_id, table_id, order_status, order_time, total_price,
 //    items: [{ order_detail_id, menu_id, menu_name, quantity, unit_price,
 //              options: [{ option_id, option_name, extra_price }] }] }]
-export function fetchAdminOrders() {
-  return adminRequest('/api/admin/orders');
+export function fetchAdminOrders(date) {
+  if (!date) return adminRequest('/api/admin/orders');
+
+  const params = new URLSearchParams({
+    date,
+    include_pending: 'true',
+  });
+
+  return adminRequest(`/api/admin/orders?${params.toString()}`);
 }
 
 // GET /api/admin/orders/:orderId → one order as above plus session: { session_id, started_at, ended_at }.

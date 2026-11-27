@@ -8,9 +8,11 @@ import AdminOrderDetailDialog from '../../components/admin/AdminOrderDetailDialo
 import StatusBadge from '../../components/admin/StatusBadge.jsx';
 import { describeAdminError, fetchAdminOrders, ORDER_STATUSES, updateOrderStatus } from '../../api/adminApi.js';
 import { useAdminData } from '../../hooks/useAdminData.js';
+import { toDbDate } from '../../utils/dateTime.js';
 import './AdminOrdersPage.css';
 
-// Real Kiosk-Server orders (GET /api/admin/orders). No automatic refresh: the admin uses "새로고침".
+// GET /api/admin/orders loads today's orders and older pending orders.
+// The list reloads on a date change or when the admin uses "새로고침".
 // PC (≥1024px): three columns (접수 / 조리 중 / 전달 완료), the tabs are hidden.
 // Tablet: status tabs; only the selected column is shown ('전체' shows all columns stacked).
 const ELAPSED_REFRESH_MS = 30000;
@@ -18,45 +20,63 @@ const ELAPSED_REFRESH_MS = 30000;
 // Orders still in progress: oldest first (first come, first served). Delivered: newest first.
 function sortForColumn(orders, status) {
   const direction = status === '전달 완료' ? -1 : 1;
-  return orders.filter((order) => order.order_status === status).sort((a, b) => (a.order_id - b.order_id) * direction);
+
+  return orders
+    .filter((order) => order.order_status === status)
+    .sort((a, b) => {
+      const timeComparison = a.order_time.localeCompare(b.order_time);
+      return (timeComparison || a.order_id - b.order_id) * direction;
+    });
+}
+
+function getOrderLabel(order, today) {
+  const orderDate = order.order_time.slice(0, 10);
+  const label = `주문 #${order.daily_order_number ?? order.order_id}`;
+  return orderDate === today ? label : `${orderDate} ${label}`;
 }
 
 // Message for a failed status change. reload: the list is loaded again (another admin changed the order).
-function describeAdvanceError(error, orderId) {
+function describeAdvanceError(error, orderLabel) {
   if (error.status === 409) {
-    return { message: `주문 #${orderId}의 상태가 이미 변경되었습니다. 최신 주문 목록을 다시 불러옵니다.`, reload: true };
+    return { message: `${orderLabel}의 상태가 이미 변경되었습니다. 최신 주문 목록을 다시 불러옵니다.`, reload: true };
   }
   if (error.status === 404) {
-    return { message: `주문 #${orderId}을(를) 찾을 수 없습니다. 최신 주문 목록을 다시 불러옵니다.`, reload: true };
+    return { message: `${orderLabel}을(를) 찾을 수 없습니다. 최신 주문 목록을 다시 불러옵니다.`, reload: true };
   }
   // No answer: the server may have saved the change before the connection failed.
   if (error.timedOut) {
-    return { message: `주문 #${orderId}: 서버 응답이 없어 상태가 변경되었는지 알 수 없습니다. 목록을 새로고침해 주세요.` };
+    return { message: `${orderLabel}: 서버 응답이 없어 상태가 변경되었는지 알 수 없습니다. 목록을 새로고침해 주세요.` };
   }
   if (error.status === undefined) {
-    return { message: `주문 #${orderId}: 서버에 연결하지 못했습니다. 네트워크 상태를 확인한 뒤 목록을 새로고침해 주세요.` };
+    return { message: `${orderLabel}: 서버에 연결하지 못했습니다. 네트워크 상태를 확인한 뒤 목록을 새로고침해 주세요.` };
   }
-  return { message: describeAdminError(error, `주문 #${orderId}의 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.`) };
+  return { message: describeAdminError(error, `${orderLabel}의 상태를 변경하지 못했습니다. 잠시 후 다시 시도해 주세요.`) };
 }
 
 function AdminOrdersPage() {
-  const { status, data: orders, error, retry, setData } = useAdminData(fetchAdminOrders);
+  const [now, setNow] = useState(() => new Date());
+  const today = toDbDate(now);
+  const { status, data: orders, error, retry, setData } = useAdminData(fetchAdminOrders, today);
   const [filter, setFilter] = useState('all');
   const [tableFilter, setTableFilter] = useState('all'); // 'all' or a table_id as a string (<select> value)
-  const [detailOrderId, setDetailOrderId] = useState(null);
+  const [detailOrder, setDetailOrder] = useState(null);
   // Orders with a status change in flight (several orders can change at once).
   const [busyOrderIds, setBusyOrderIds] = useState(() => new Set());
   // Same IDs, updated synchronously: blocks a second PATCH for an order before the disabled button renders.
   const pendingOrderIds = useRef(new Set());
   const [actionError, setActionError] = useState(null); // { message, loginExpired? }
-  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), ELAPSED_REFRESH_MS);
     return () => clearInterval(timer);
   }, []);
 
-  // PATCH /api/admin/orders/:orderId/status; the card shows the order the server returned.
+  const handleRefresh = () => {
+    setNow(new Date());
+    retry();
+  };
+
+  // PATCH /api/admin/orders/:orderId/status; merge the response to retain the daily order number.
   const handleAdvance = async (order, nextStatus) => {
     const orderId = order.order_id;
     if (pendingOrderIds.current.has(orderId)) return;
@@ -65,14 +85,24 @@ function AdminOrdersPage() {
     setActionError(null);
     try {
       const updated = await updateOrderStatus(order.order_id, nextStatus);
-      setData((list) => list.map((item) => (item.order_id === updated.order_id ? updated : item)));
+      const currentTime = new Date();
+      const currentDate = toDbDate(currentTime);
+
+      setNow(currentTime);
+      setData((list) =>
+        list
+          .map((item) => (item.order_id === updated.order_id ? { ...item, ...updated } : item))
+          .filter((item) =>
+            item.order_status !== '전달 완료' || item.order_time.slice(0, 10) === currentDate,
+          ),
+      );
     } catch (advanceError) {
       if (advanceError.status === 401) {
         setActionError({ message: describeAdminError(advanceError), loginExpired: true });
       } else {
-        const { message, reload } = describeAdvanceError(advanceError, order.order_id);
+        const { message, reload } = describeAdvanceError(advanceError, getOrderLabel(order, today));
         setActionError({ message });
-        if (reload) retry();
+        if (reload) handleRefresh();
       }
     } finally {
       pendingOrderIds.current.delete(orderId);
@@ -98,7 +128,7 @@ function AdminOrdersPage() {
         <button
           type="button"
           className="admin-btn admin-btn--secondary"
-          onClick={retry}
+          onClick={handleRefresh}
           disabled={status === 'loading'}
         >
           새로고침
@@ -113,7 +143,7 @@ function AdminOrdersPage() {
       )}
 
       {status === 'loading' && <AdminStateView status="loading" message="주문을 불러오는 중입니다…" />}
-      {status === 'error' && <AdminLoadError error={error} fallback="주문을 불러오지 못했습니다." onRetry={retry} />}
+      {status === 'error' && <AdminLoadError error={error} fallback="주문을 불러오지 못했습니다." onRetry={handleRefresh} />}
       {status === 'success' && orders.length === 0 && (
         <AdminStateView status="empty" message="아직 들어온 주문이 없습니다." />
       )}
@@ -166,10 +196,11 @@ function AdminOrdersPage() {
                         <li key={order.order_id}>
                           <AdminOrderCard
                             order={order}
+                            orderLabel={getOrderLabel(order, today)}
                             now={now}
                             isBusy={busyOrderIds.has(order.order_id)}
                             onAdvance={handleAdvance}
-                            onOpenDetail={setDetailOrderId}
+                            onOpenDetail={() => setDetailOrder(order)}
                           />
                         </li>
                       ))}
@@ -183,8 +214,13 @@ function AdminOrdersPage() {
       )}
 
       {/* key: a new order starts with an empty dialog, never with the previous order's data. */}
-      {detailOrderId !== null && (
-        <AdminOrderDetailDialog key={detailOrderId} orderId={detailOrderId} onClose={() => setDetailOrderId(null)} />
+      {detailOrder !== null && (
+        <AdminOrderDetailDialog
+          key={detailOrder.order_id}
+          orderId={detailOrder.order_id}
+          orderLabel={getOrderLabel(detailOrder, today)}
+          onClose={() => setDetailOrder(null)}
+        />
       )}
     </>
   );

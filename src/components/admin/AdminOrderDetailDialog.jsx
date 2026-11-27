@@ -15,7 +15,7 @@ const getUnitTotal = (item) => item.options.reduce((sum, option) => sum + option
 // Order detail (GET /api/admin/orders/:orderId), loaded again every time the dialog opens.
 // The parent renders it with key={orderId}, and useAdminData only shows the result of the request for
 // this orderId, so the data of a previously opened order is never shown here.
-function AdminOrderDetailDialog({ orderId, onClose }) {
+function AdminOrderDetailDialog({ orderId, orderLabel = `주문 #${orderId}`, onClose }) {
   const dialogRef = useRef(null);
   const { status, data: order, error, retry } = useAdminData(fetchAdminOrderById, orderId);
 
@@ -44,7 +44,7 @@ function AdminOrderDetailDialog({ orderId, onClose }) {
           </div>
           <div>
             <dt>주문 번호</dt>
-            <dd>#{order.order_id}</dd>
+            <dd>{orderLabel}</dd>
           </div>
           <div>
             <dt>주문 시간</dt>
@@ -110,7 +110,7 @@ function AdminOrderDetailDialog({ orderId, onClose }) {
     >
       <div className="admin-dialog__form">
         <header className="admin-dialog__head">
-          <h2 id="order-detail-title" className="admin-dialog__title">주문 #{orderId} 상세</h2>
+          <h2 id="order-detail-title" className="admin-dialog__title">{orderLabel} 상세</h2>
         </header>
 
         <div className="admin-dialog__body">{content}</div>
