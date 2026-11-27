@@ -75,19 +75,33 @@ export function fetchAdminMenus() {
 // Both resolve with the saved menu returned by the server.
 export function saveMenu(menu, imageFile = null) {
   if (menu.menu_id != null) {
-    return adminRequest(`/api/admin/menus/${encodeURIComponent(menu.menu_id)}`, {
+    const path = `/api/admin/menus/${encodeURIComponent(menu.menu_id)}`;
+    const menuData = {
+      menu_name: menu.menu_name,
+      price: menu.price,
+      category_id: menu.category_id,
+      description: menu.description,
+      options: menu.options.map((option) => ({
+        option_id: option.option_id,
+        option_name: option.option_name,
+        additional_price: option.additional_price,
+      })),
+    };
+
+    if (!imageFile) {
+      return adminRequest(path, {
+        method: 'PATCH',
+        body: menuData,
+      });
+    }
+
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(menuData));
+    formData.append('image', imageFile);
+
+    return adminRequest(path, {
       method: 'PATCH',
-      body: {
-        menu_name: menu.menu_name,
-        price: menu.price,
-        category_id: menu.category_id,
-        description: menu.description,
-        options: menu.options.map((option) => ({
-          option_id: option.option_id,
-          option_name: option.option_name,
-          additional_price: option.additional_price,
-        })),
-      },
+      body: formData,
     });
   }
 

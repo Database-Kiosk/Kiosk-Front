@@ -68,7 +68,7 @@ function MenuFormDialog({ menu, categories, onClose, onSave }) {
     event.preventDefault();
     const nextErrors = validate(draft);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || isSaving) return;
+    if (Object.keys(nextErrors).length > 0 || imageError || isSaving) return;
 
     setIsSaving(true);
     setSaveError('');
@@ -184,13 +184,12 @@ const handleImageChange = (event) => {
         </header>
 
         <div className="admin-dialog__body">
-          {!isEdit && (
           <div className="admin-field">
             <label
               className="admin-field__label"
               htmlFor="menu-form-image"
             >
-              메뉴 사진 (선택)
+              {isEdit ? '새 메뉴 사진 (선택)' : '메뉴 사진 (선택)'}
             </label>
 
             <input
@@ -231,7 +230,6 @@ const handleImageChange = (event) => {
               />
             )}
           </div>
-          )}
           <div className="admin-field">
             <label className="admin-field__label" htmlFor="menu-form-menu_name">메뉴 이름</label>
             <input
